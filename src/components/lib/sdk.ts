@@ -740,9 +740,12 @@ export const userProfileService = {
           phone,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", existing.id);
+        .eq("email", email);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Profile update error:", error);
+        throw error;
+      }
       return { ...existing, name, phone };
     } else {
       const profile = {

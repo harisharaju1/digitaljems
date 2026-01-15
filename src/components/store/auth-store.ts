@@ -121,6 +121,15 @@ export const useAuthStore = create<AuthState>()(
         const user = get().user;
         if (!user) throw new Error("Not authenticated");
 
+        // Import supabase here to avoid circular dependency
+        const { supabase } = await import("@/components/lib/supabase");
+        
+        // Ensure we have a valid session before updating
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error("Session expired. Please log in again.");
+        }
+
         const profile = await userProfileService.upsertProfile(
           user.email,
           name,
