@@ -30,8 +30,8 @@ import { authService } from "@/components/lib/sdk";
 function App() {
   // Initialize auth listener
   useEffect(() => {
-    // Helper to sync session state
-    const syncSession = async (session: { user: { id: string; email?: string | null } } | null) => {
+    // Helper to sync session state - wrapped in setTimeout to avoid blocking token refresh
+    const syncSession = (session: { user: { id: string; email?: string | null } } | null) => {
       if (session?.user) {
         authService.storeUserInfo(
           session.user.id,
@@ -48,8 +48,11 @@ function App() {
           },
         });
 
-        await useAuthStore.getState().loadProfile();
-        await useAuthStore.getState().checkAdminStatus();
+        // Defer heavy async operations to not block auth state changes
+        setTimeout(async () => {
+          await useAuthStore.getState().loadProfile();
+          await useAuthStore.getState().checkAdminStatus();
+        }, 0);
       } else {
         // No session - clear auth state
         authService.clearUserInfo();
@@ -63,28 +66,39 @@ function App() {
     };
 
     // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Auth event:", event);
       
-      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
-        await syncSession(session);
+      // Handle all session-related events including INITIAL_SESSION (fires on tab focus)
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") {
+        syncSession(session);
       } else if (event === "SIGNED_OUT") {
-        await syncSession(null);
+        syncSession(null);
       }
     });
 
     // Check for existing session on app load
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      await syncSession(session);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      syncSession(session);
     });
 
-    // Refresh data when returning to tab (without full page reload)
+    // Refresh session when returning to tab
     const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible") {
-        // Refresh the session token
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          await supabase.auth.refreshSession();
+        try {
+          // refreshSession returns the new session - use it to sync state
+          const { data: { session }, error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.error("Session refresh error:", error);
+            // If refresh fails, check if we still have a valid session
+            const { data } = await supabase.auth.getSession();
+            if (!data.session) {
+              syncSession(null); // Clear state if no valid session
+            }
+          }
+          // Note: successful refresh triggers TOKEN_REFRESHED event, so syncSession will be called automatically
+        } catch (e) {
+          console.error("Visibility change session refresh failed:", e);
         }
       }
     };
