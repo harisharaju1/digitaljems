@@ -33,9 +33,10 @@ export function AdminLayout() {
     }
   }, [isAuthenticated, isAdmin, navigate]);
 
-  const handleLogout = async () => {
-    await logout();
-    navigate("/");
+  const handleLogout = () => {
+    logout();
+    localStorage.clear();
+    window.location.href = "/";
   };
 
   if (!isAuthenticated || !isAdmin) {

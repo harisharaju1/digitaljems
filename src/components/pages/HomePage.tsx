@@ -78,6 +78,14 @@ export function HomePage() {
             Save on making charges by shopping online. Premium gold, silver, and
             diamond jewellery delivered across India.
           </p>
+          <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" onClick={() => document.getElementById('catalog')?.scrollIntoView({ behavior: 'smooth' })}>
+              View Catalog
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate('/custom-request')}>
+              Custom Order
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -103,7 +111,7 @@ export function HomePage() {
       </section>
 
       {/* Product Grid */}
-      <section className="container mx-auto px-4 py-12">
+      <section id="catalog" className="container mx-auto px-4 py-12">
         {/* Loading State */}
         {isLoading && (
           <div className="min-h-[400px]">

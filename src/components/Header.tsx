@@ -132,13 +132,14 @@ export function Header() {
               )}
             </Button>
 
-            {/* Admin/Store Toggle */}
+            {/* Admin/Store Toggle - Desktop */}
             {isAuthenticated && isAdmin && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate(isOnAdminPage ? "/" : "/admin")}
                 title={isOnAdminPage ? "Go to Store" : "Go to Admin"}
+                className="hidden md:flex"
               >
                 {isOnAdminPage ? (
                   <Store className="h-5 w-5" />
@@ -190,6 +191,23 @@ export function Header() {
             ) : (
               <Button variant="ghost" onClick={() => navigate("/login")}>
                 Sign In
+              </Button>
+            )}
+
+            {/* Admin/Store Toggle - Mobile (visible next to hamburger) */}
+            {isAuthenticated && isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(isOnAdminPage ? "/" : "/admin")}
+                title={isOnAdminPage ? "Go to Store" : "Go to Admin"}
+                className="md:hidden"
+              >
+                {isOnAdminPage ? (
+                  <Store className="h-5 w-5" />
+                ) : (
+                  <LayoutDashboard className="h-5 w-5" />
+                )}
               </Button>
             )}
 

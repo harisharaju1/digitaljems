@@ -187,8 +187,8 @@
     width: calc(100vw - 2rem) !important;
     max-width: calc(100vw - 2rem) !important;
     left: 50% !important;
-    transform: translateX(-50%) !important;
-    margin: 0 auto;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
     border-radius: 0.75rem;
   }
   

@@ -352,8 +352,8 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
           <div 
             className="sticky top-0 z-0 bg-muted transition-all duration-150 ease-out overflow-hidden"
             style={{ 
-              height: `${Math.max(120, 280 * imageScale)}px`,
-              minHeight: '120px'
+              height: `${Math.max(150, 400 * imageScale)}px`,
+              minHeight: '150px'
             }}
           >
             <div className="relative h-full w-full">
