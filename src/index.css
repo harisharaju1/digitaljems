@@ -1,0 +1,193 @@
+/**
+ * =====================================
+ *         UI DESIGN SYSTEM
+ * =====================================
+ * 
+ * Project: Luxury Jewellery E-commerce
+ * Type: Premium Retail Platform
+ * 
+ * DESIGN PHILOSOPHY
+ * -----------------
+ * Core Principle: Sophisticated minimalism meets timeless luxury
+ * Design Style: Modern Luxury - Clean lines with rich accents, emphasizing product photography
+ * Emotion Goal: Trust, elegance, and effortless shopping experience
+ * 
+ * COLOR SYSTEM (HSL FORMAT)
+ * -------------
+ * Background: 40 40% 98% - Warm ivory (luxury paper feel)
+ * Foreground: 30 5% 15% - Deep charcoal (readable, not harsh)
+ * Primary: 30 8% 12% - Rich espresso (premium buttons, CTA)
+ * Gold Accent: 43 84% 55% - Refined gold (savings highlight, premium touches)
+ * Secondary: 40 15% 92% - Soft beige (cards, sections)
+ * Muted: 40 10% 60% - Warm gray (secondary text)
+ * Border: 40 15% 88% - Subtle cream (elegant divisions)
+ * Success: 142 76% 36% - Emerald (order confirmation)
+ * 
+ * TYPOGRAPHY
+ * ----------
+ * Display: Playfair Display / Serif for elegance
+ * Body: Inter / System for clarity
+ * Weight Hierarchy: 300 (light) for descriptions, 400 (regular) for body, 600 (semibold) for emphasis
+ * 
+ * INTERACTIONS
+ * ------------
+ * Transitions: 250-350ms ease-out for premium feel
+ * Hover: Subtle scale (1.02) and shadow depth
+ * Focus: Gold ring with soft glow
+ * Image Zoom: Smooth 300ms with overlay fade
+ * 
+ * LAYOUT
+ * ------
+ * Grid: 3-4 columns on desktop, 2 on tablet, 1 on mobile
+ * Spacing: Generous whitespace (p-6 to p-12)
+ * Cards: Minimal border, subtle shadow, focus on imagery
+ * Modal: 90vw max, 80% image / 20% content split
+ * ====================================
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 40% 98%;
+    --foreground: 30 5% 15%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 5% 15%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 5% 15%;
+    --primary: 30 8% 12%;
+    --primary-foreground: 40 40% 98%;
+    --secondary: 40 15% 92%;
+    --secondary-foreground: 30 5% 15%;
+    --muted: 40 15% 92%;
+    --muted-foreground: 40 10% 60%;
+    --accent: 43 84% 55%;
+    --accent-foreground: 30 8% 12%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 43 84% 55%;
+    --success: 142 76% 36%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.375rem
+;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+}
+
+@layer components {
+  /* Product Grid Card Hover */
+  .product-card {
+    @apply transition-all duration-300 ease-out;
+  }
+  .product-card:hover {
+    @apply shadow-lg -translate-y-1;
+  }
+  
+  /* Savings Badge */
+  .savings-badge {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium;
+    background: hsl(var(--accent) / 0.15);
+    color: hsl(var(--accent));
+    border: 1px solid hsl(var(--accent) / 0.3);
+  }
+  
+  /* Premium Button */
+  .btn-premium {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+  .btn-premium:hover {
+    @apply shadow-md scale-[1.02];
+  }
+  
+  /* Image Zoom Container */
+  .zoom-container {
+    @apply cursor-zoom-in transition-transform duration-300;
+  }
+  
+  /* Elegant Divider */
+  .divider-elegant {
+    @apply h-px bg-gradient-to-r from-transparent via-border to-transparent;
+  }
+  
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Touch-friendly tap targets */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* ============ Responsive Refinements ============ */
+
+@layer utilities {
+  /* Safe area insets for mobile */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Mobile-first responsive typography */
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+  
+  /* Larger touch targets on mobile */
+  button, 
+  [role="button"],
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+  
+  /* Full-width inputs on mobile */
+  .container input:not([type="checkbox"]):not([type="radio"]),
+  .container select,
+  .container textarea {
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+}
+
+/* Tablet refinements */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
