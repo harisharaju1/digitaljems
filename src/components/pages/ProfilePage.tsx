@@ -70,11 +70,7 @@ export function ProfilePage() {
 
   const handleLogout = async () => {
     await logout();
-    navigate("/");
-    toast({
-      title: "Logged out",
-      description: "You have been signed out successfully.",
-    });
+    window.location.href = "/";
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
