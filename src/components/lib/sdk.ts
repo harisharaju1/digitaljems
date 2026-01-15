@@ -219,6 +219,50 @@ export const authService = {
   },
 };
 
+// ============= Storage Service =============
+export const storageService = {
+  /**
+   * Upload a product image to Supabase Storage
+   */
+  async uploadProductImage(file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `products/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  },
+
+  /**
+   * Delete a product image from Supabase Storage
+   */
+  async deleteProductImage(url: string): Promise<void> {
+    // Extract path from URL
+    const match = url.match(/product-images\/(.+)$/);
+    if (!match) return;
+
+    const filePath = match[1];
+    const { error } = await supabase.storage
+      .from('product-images')
+      .remove([filePath]);
+
+    if (error) console.error('Failed to delete image:', error);
+  },
+};
+
 // ============= Product Service =============
 export const productService = {
   /**

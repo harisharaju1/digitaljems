@@ -10,6 +10,9 @@ import {
   Loader2,
   Search,
   MoreHorizontal,
+  Upload,
+  X,
+  Image,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,7 +56,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/hooks/use-toast";
-import { productService, adminLogService } from "@/components/lib/sdk";
+import { productService, adminLogService, storageService } from "@/components/lib/sdk";
 import type { Product, ProductFormData, ProductCategory, MetalType, MetalPurity } from "@/components/types";
 
 const categories: ProductCategory[] = [
@@ -92,6 +95,8 @@ export function AdminProducts() {
   const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(emptyForm);
   const [imageUrls, setImageUrls] = useState("");
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -119,6 +124,7 @@ export function AdminProducts() {
     setEditingProduct(null);
     setFormData(emptyForm);
     setImageUrls("");
+    setUploadedImages([]);
     setIsFormOpen(true);
   };
 
@@ -139,7 +145,63 @@ export function AdminProducts() {
       is_active: product.is_active,
     });
     setImageUrls(product.images.join("\n"));
+    setUploadedImages(product.images);
     setIsFormOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const newUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('image/')) {
+          toast({
+            title: "Invalid file",
+            description: `${file.name} is not an image`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: `${file.name} exceeds 5MB limit`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        const url = await storageService.uploadProductImage(file);
+        newUrls.push(url);
+      }
+
+      if (newUrls.length > 0) {
+        setUploadedImages(prev => [...prev, ...newUrls]);
+        setImageUrls(prev => prev ? `${prev}\n${newUrls.join('\n')}` : newUrls.join('\n'));
+        toast({ title: `${newUrls.length} image(s) uploaded` });
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeUploadedImage = (urlToRemove: string) => {
+    setUploadedImages(prev => prev.filter(url => url !== urlToRemove));
+    setImageUrls(prev => 
+      prev.split('\n').filter(url => url.trim() !== urlToRemove).join('\n')
+    );
   };
 
   const openDeleteDialog = (product: Product) => {
@@ -537,7 +599,45 @@ export function AdminProducts() {
             </div>
 
             <div className="grid gap-1.5 sm:gap-2">
-              <Label htmlFor="images" className="text-sm">Image URLs (one per line)</Label>
+              <Label className="text-sm">Product Images</Label>
+              
+              {/* Image Upload */}
+              <div className="flex flex-wrap gap-2 mb-2">
+                {uploadedImages.map((url, index) => (
+                  <div key={index} className="relative h-16 w-16 rounded-lg overflow-hidden border bg-muted">
+                    <img src={url} alt={`Product ${index + 1}`} className="h-full w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeUploadedImage(url)}
+                      className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+                
+                {/* Upload Button */}
+                <label className="h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer hover:border-muted-foreground/50 transition-colors">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                  {isUploading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </label>
+              </div>
+              
+              <p className="text-xs text-muted-foreground">
+                Click + to upload images (max 5MB each) or add URLs below
+              </p>
+              
               <Textarea
                 id="images"
                 value={imageUrls}
