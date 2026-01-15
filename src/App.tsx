@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,22 +18,11 @@ import { AdminDashboard } from "@/components/pages/admin/AdminDashboard";
 import { AdminProducts } from "@/components/pages/admin/AdminProducts";
 import { AdminOrders } from "@/components/pages/admin/AdminOrders";
 import NotFoundPage from "@/components/pages/NotFoundPage";
-import { initAnalytics, trackPageView } from "@/components/lib/analytics";
+import { initAnalytics } from "@/components/lib/analytics";
 import { initErrorTracking } from "@/components/lib/error-tracking";
 import { supabase } from "@/components/lib/supabase";
 import { useAuthStore } from "@/components/store/auth-store";
 import { authService } from "@/components/lib/sdk";
-
-// Track page views on route changes
-function PageViewTracker() {
-  const location = useLocation();
-  
-  useEffect(() => {
-    trackPageView(location.pathname, document.title);
-  }, [location]);
-  
-  return null;
-}
 
 function App() {
   const setAuth = useAuthStore((state) => ({
@@ -101,7 +90,6 @@ function App() {
     <HelmetProvider>
     <TooltipProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <PageViewTracker />
         <Routes>
           {/* Admin Routes - No Header */}
           <Route path="/admin" element={<AdminLayout />}>
