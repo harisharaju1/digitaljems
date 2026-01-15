@@ -93,13 +93,19 @@ export const useAuthStore = create<AuthState>()(
         });
       },
 
-      // Load user profile
+      // Load user profile (creates one if it doesn't exist)
       loadProfile: async () => {
         const user = get().user;
         if (!user) return;
 
         try {
-          const profile = await userProfileService.getProfile(user.email);
+          let profile = await userProfileService.getProfile(user.email);
+          
+          // Create profile if it doesn't exist
+          if (!profile) {
+            profile = await userProfileService.upsertProfile(user.email, "", "");
+          }
+          
           set({ profile });
         } catch (error) {
           console.error("Failed to load profile:", error);

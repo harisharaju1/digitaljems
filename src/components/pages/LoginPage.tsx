@@ -222,6 +222,22 @@ export function LoginPage() {
             <Button
               variant="outline"
               className="w-full"
+              onClick={handleSignUp}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Resending...
+                </>
+              ) : (
+                "Resend confirmation email"
+              )}
+            </Button>
+
+            <Button
+              variant="ghost"
+              className="w-full"
               onClick={() => {
                 resetForm();
                 setActiveTab("signin");
