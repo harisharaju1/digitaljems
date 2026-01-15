@@ -17,8 +17,12 @@ import { ProductDetailPage } from "@/components/pages/ProductDetailPage";
 import { AdminLayout } from "@/components/pages/admin/AdminLayout";
 import { AdminDashboard } from "@/components/pages/admin/AdminDashboard";
 import { AdminProducts } from "@/components/pages/admin/AdminProducts";
+import { AdminProductForm } from "@/components/pages/admin/AdminProductForm";
 import { AdminOrders } from "@/components/pages/admin/AdminOrders";
+import { AdminOrderDetail } from "@/components/pages/admin/AdminOrderDetail";
+import { AdminOrderUpdate } from "@/components/pages/admin/AdminOrderUpdate";
 import NotFoundPage from "@/components/pages/NotFoundPage";
+import { ScrollToTop } from "@/components/ScrollToTop";
 import { supabase } from "@/components/lib/supabase";
 import { useAuthStore } from "@/components/store/auth-store";
 import { authService } from "@/components/lib/sdk";
@@ -82,12 +86,17 @@ function App() {
     <HelmetProvider>
     <TooltipProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ScrollToTop />
         <Routes>
           {/* Admin Routes - No Header */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="products/new" element={<AdminProductForm />} />
+            <Route path="products/:id/edit" element={<AdminProductForm />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="orders/:id" element={<AdminOrderDetail />} />
+            <Route path="orders/:id/update" element={<AdminOrderUpdate />} />
           </Route>
 
           {/* Customer Routes - With Header & Footer */}
