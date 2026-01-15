@@ -3,8 +3,8 @@
  * Shows logo, navigation, cart, and auth controls
  */
 
-import { ShoppingCart, User, Search, Menu, X } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ShoppingCart, User, Search, Menu, X, LayoutDashboard, Store } from "lucide-react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/Logo";
@@ -31,7 +31,9 @@ import { cn } from "@/components/lib/utils";
 
 export function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { isAuthenticated, user, isAdmin, logout } = useAuthStore();
+  const isOnAdminPage = location.pathname.startsWith("/admin");
   const { itemCount } = useCartStore();
   const { searchQuery, setSearchQuery } = useProductsStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -129,6 +131,22 @@ export function Header() {
                 </Badge>
               )}
             </Button>
+
+            {/* Admin/Store Toggle */}
+            {isAuthenticated && isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(isOnAdminPage ? "/" : "/admin")}
+                title={isOnAdminPage ? "Go to Store" : "Go to Admin"}
+              >
+                {isOnAdminPage ? (
+                  <Store className="h-5 w-5" />
+                ) : (
+                  <LayoutDashboard className="h-5 w-5" />
+                )}
+              </Button>
+            )}
 
             {/* User Menu */}
             {isAuthenticated ? (

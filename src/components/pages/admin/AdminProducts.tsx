@@ -458,7 +458,7 @@ export function AdminProducts() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-h-[85vh] w-[95vw] max-w-2xl overflow-y-auto p-4 sm:p-6">
+        <DialogContent className="max-h-[85vh] w-[calc(100vw-2rem)] max-w-2xl overflow-y-auto p-4 sm:p-6 mx-4 rounded-lg">
           <DialogHeader className="pb-2">
             <DialogTitle className="text-lg sm:text-xl">
               {editingProduct ? "Edit Product" : "Add New Product"}
@@ -679,7 +679,7 @@ export function AdminProducts() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent>
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md mx-4 rounded-lg">
           <DialogHeader>
             <DialogTitle>Delete Product</DialogTitle>
             <DialogDescription>

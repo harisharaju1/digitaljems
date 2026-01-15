@@ -184,7 +184,12 @@
   /* Better dialog sizing on mobile */
   [data-state="open"][role="dialog"] {
     max-height: 90dvh !important;
-    margin: 1rem;
+    width: calc(100vw - 2rem) !important;
+    max-width: calc(100vw - 2rem) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    margin: 0 auto;
+    border-radius: 0.75rem;
   }
   
   /* Prevent body scroll when modal is open */
