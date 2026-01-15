@@ -4,7 +4,7 @@
  */
 
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin, Shield, Award, Truck } from "lucide-react";
+import { Phone, Mail, MapPin } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Logo } from "@/components/Logo";
 
@@ -15,41 +15,6 @@ export function Footer() {
 
   return (
     <footer className="border-t bg-secondary/30">
-      {/* Trust Signals Bar */}
-      <div className="border-b">
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 text-center">
-            <div className="flex flex-col items-center gap-2">
-              <Award className="h-6 w-6 text-accent" />
-              <div>
-                <p className="font-medium text-sm">BIS Hallmarked</p>
-                <p className="text-xs text-muted-foreground">
-                  Certified Gold & Silver
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <Shield className="h-6 w-6 text-accent" />
-              <div>
-                <p className="font-medium text-sm">Secure Payments</p>
-                <p className="text-xs text-muted-foreground">
-                  100% Safe Checkout
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              <Truck className="h-6 w-6 text-accent" />
-              <div>
-                <p className="font-medium text-sm">Insured Shipping</p>
-                <p className="text-xs text-muted-foreground">
-                  Pan India Delivery
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Main Footer Content */}
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">

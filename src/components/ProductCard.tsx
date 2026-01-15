@@ -140,9 +140,9 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
       </div>
 
-      <CardContent className="p-4">
+      <CardContent className="p-3 sm:p-4">
         {/* Metal & Category Info */}
-        <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="mb-1 flex flex-wrap items-center gap-1 sm:gap-2 text-[10px] sm:text-xs text-muted-foreground">
           <span className="capitalize">
             {product.metal_type.replace("_", " ")}
           </span>
@@ -153,26 +153,26 @@ export function ProductCard({ product }: ProductCardProps) {
         </div>
 
         {/* Product Name */}
-        <h3 className="mb-1 line-clamp-1 font-semibold text-foreground">
+        <h3 className="mb-1 line-clamp-1 text-sm sm:text-base font-semibold text-foreground">
           {product.name}
         </h3>
 
-        {/* Description */}
-        <p className="mb-3 line-clamp-2 text-sm text-muted-foreground">
+        {/* Description - hide on mobile */}
+        <p className="mb-2 sm:mb-3 line-clamp-2 text-xs sm:text-sm text-muted-foreground hidden sm:block">
           {product.description}
         </p>
 
         {/* Pricing */}
-        <div className="flex items-baseline gap-2">
-          <span className="text-xl font-bold text-foreground">
+        <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
+          <span className="text-base sm:text-xl font-bold text-foreground">
             ₹{product.price.toLocaleString("en-IN")}
           </span>
           {product.mrp > product.price && (
             <>
-              <span className="text-sm text-muted-foreground line-through">
+              <span className="text-xs sm:text-sm text-muted-foreground line-through">
                 ₹{product.mrp.toLocaleString("en-IN")}
               </span>
-              <span className="text-sm font-medium text-accent">
+              <span className="text-xs sm:text-sm font-medium text-accent">
                 {savingsPercent}% off
               </span>
             </>
