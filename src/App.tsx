@@ -23,10 +23,6 @@ import { useAuthStore } from "@/components/store/auth-store";
 import { authService } from "@/components/lib/sdk";
 
 function App() {
-  const setAuth = useAuthStore((state) => ({
-    login: state.login,
-  }));
-
   // Initialize auth listener
   useEffect(() => {
     // Listen for auth state changes (magic link callback)
