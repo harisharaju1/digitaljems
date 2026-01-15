@@ -78,8 +78,22 @@ function App() {
       await syncSession(session);
     });
 
+    // Refresh data when returning to tab (without full page reload)
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        // Refresh the session token
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          await supabase.auth.refreshSession();
+        }
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 

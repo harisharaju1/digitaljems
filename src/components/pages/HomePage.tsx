@@ -40,7 +40,20 @@ export function HomePage() {
 
   // Load products on mount
   useEffect(() => {
+    // Always load products when component mounts
     loadProducts();
+  }, []); // Empty deps - only run on mount
+
+  // Reload when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadProducts();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [loadProducts]);
 
   // Handle category from URL

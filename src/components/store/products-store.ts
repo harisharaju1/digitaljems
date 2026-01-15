@@ -4,6 +4,7 @@
  */
 
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { productService } from "@/components/lib/sdk";
 import type { Product, ProductCategory } from "@/components/types";
 
@@ -25,7 +26,9 @@ interface ProductsState {
   filteredProducts: () => Product[];
 }
 
-export const useProductsStore = create<ProductsState>((set, get) => ({
+export const useProductsStore = create<ProductsState>()(
+  persist(
+    (set, get) => ({
   // Initial state
   products: [],
   isLoading: false,
@@ -104,4 +107,10 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
 
     return filtered;
   },
-}));
+}),
+    {
+      name: "products-storage",
+      partialize: (state) => ({ products: state.products }),
+    }
+  )
+);

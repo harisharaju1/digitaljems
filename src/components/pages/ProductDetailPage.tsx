@@ -46,10 +46,23 @@ export function ProductDetailPage() {
     document.body.scrollTop = 0;
   }, [id]);
 
+  // Load products if not available
   useEffect(() => {
     if (products.length === 0) {
       loadProducts();
     }
+  }, []);
+
+  // Reload when tab becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && products.length === 0) {
+        loadProducts();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [products.length, loadProducts]);
 
   const product = products.find((p) => p.id === id);
