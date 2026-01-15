@@ -30,34 +30,8 @@ import { authService } from "@/components/lib/sdk";
 function App() {
   // Initialize auth listener
   useEffect(() => {
-    // Listen for auth state changes (magic link callback)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        // Store user info
-        authService.storeUserInfo(
-          session.user.id,
-          session.user.email || "",
-          ""
-        );
-        
-        // Update auth store
-        useAuthStore.setState({
-          isAuthenticated: true,
-          user: {
-            uid: session.user.id,
-            email: session.user.email || "",
-            name: "",
-          },
-        });
-
-        // Load profile and check admin status
-        await useAuthStore.getState().loadProfile();
-        await useAuthStore.getState().checkAdminStatus();
-      }
-    });
-
-    // Check for existing session on app load
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    // Helper to sync session state
+    const syncSession = async (session: { user: { id: string; email?: string | null } } | null) => {
       if (session?.user) {
         authService.storeUserInfo(
           session.user.id,
@@ -76,10 +50,58 @@ function App() {
 
         await useAuthStore.getState().loadProfile();
         await useAuthStore.getState().checkAdminStatus();
+      } else {
+        // No session - clear auth state
+        authService.clearUserInfo();
+        useAuthStore.setState({
+          isAuthenticated: false,
+          user: null,
+          profile: null,
+          isAdmin: false,
+        });
+      }
+    };
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth event:", event);
+      
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        await syncSession(session);
+      } else if (event === "SIGNED_OUT") {
+        await syncSession(null);
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Check for existing session on app load
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      await syncSession(session);
+    });
+
+    // Refresh session when tab becomes visible (after phone lock/tab switch)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
+          if (session) {
+            // Try to refresh the session
+            const { data, error } = await supabase.auth.refreshSession();
+            if (error) {
+              console.error("Session refresh failed:", error);
+              await syncSession(null);
+            } else {
+              await syncSession(data.session);
+            }
+          }
+        });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      subscription.unsubscribe();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   return (
