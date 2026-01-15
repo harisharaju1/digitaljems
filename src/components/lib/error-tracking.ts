@@ -49,21 +49,3 @@ export function setUser(user: { id: string; email?: string; name?: string } | nu
     console.log("[ErrorTracking] User context cleared");
   }
 }
-
-// Simple error boundary fallback - React's built-in error boundaries can use this
-export function ErrorFallback({ error }: { error: Error }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
-        <p className="mt-2 text-gray-600">{error.message}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 rounded bg-primary px-4 py-2 text-white"
-        >
-          Reload page
-        </button>
-      </div>
-    </div>
-  );
-}
