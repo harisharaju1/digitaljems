@@ -61,7 +61,7 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
 
   // Get product by ID
   getProductById: (id) => {
-    return get().products.find((p) => p._id === id);
+    return get().products.find((p) => p.id === id);
   },
 
   // Get filtered products

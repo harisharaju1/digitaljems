@@ -54,14 +54,14 @@ export const useCartStore = create<CartState>()(
       addItem: (product: Product, quantity = 1) => {
         const items = get().items;
         const existingItem = items.find(
-          (item) => item.product._id === product._id
+          (item) => item.product.id === product.id
         );
 
         if (existingItem) {
           // Update quantity
           set({
             items: items.map((item) =>
-              item.product._id === product._id
+              item.product.id === product.id
                 ? { ...item, quantity: item.quantity + quantity }
                 : item
             ),
@@ -75,7 +75,7 @@ export const useCartStore = create<CartState>()(
       // Remove item from cart
       removeItem: (productId: string) => {
         set({
-          items: get().items.filter((item) => item.product._id !== productId),
+          items: get().items.filter((item) => item.product.id !== productId),
         });
       },
 
@@ -88,7 +88,7 @@ export const useCartStore = create<CartState>()(
 
         set({
           items: get().items.map((item) =>
-            item.product._id === productId ? { ...item, quantity } : item
+            item.product.id === productId ? { ...item, quantity } : item
           ),
         });
       },
@@ -100,7 +100,7 @@ export const useCartStore = create<CartState>()(
 
       // Get specific item
       getItem: (productId: string) => {
-        return get().items.find((item) => item.product._id === productId);
+        return get().items.find((item) => item.product.id === productId);
       },
     }),
     {
