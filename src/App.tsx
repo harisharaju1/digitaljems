@@ -13,6 +13,7 @@ import { LoginPage } from "@/components/pages/LoginPage";
 import { ProfilePage } from "@/components/pages/ProfilePage";
 import { OrderHistoryPage } from "@/components/pages/OrderHistoryPage";
 import { CustomRequestPage } from "@/components/pages/CustomRequestPage";
+import { ProductDetailPage } from "@/components/pages/ProductDetailPage";
 import { AdminLayout } from "@/components/pages/admin/AdminLayout";
 import { AdminDashboard } from "@/components/pages/admin/AdminDashboard";
 import { AdminProducts } from "@/components/pages/admin/AdminProducts";
@@ -98,6 +99,7 @@ function App() {
                 <main className="flex-1">
                   <Routes>
                     <Route path="/" element={<HomePage />} />
+                    <Route path="/product/:id" element={<ProductDetailPage />} />
                     <Route path="/cart" element={<CartPage />} />
                     <Route path="/checkout" element={<CheckoutPage />} />
                     <Route

@@ -4,6 +4,7 @@
  */
 
 import { ShoppingCart, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,10 +15,10 @@ import { useToast } from "@/components/hooks/use-toast";
 
 interface ProductCardProps {
   product: Product;
-  onClick: () => void;
 }
 
-export function ProductCard({ product, onClick }: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
+  const navigate = useNavigate();
   const addItem = useCartStore((state) => state.addItem);
   const { toast } = useToast();
 
@@ -36,7 +37,7 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
   return (
     <Card
       className="product-card group cursor-pointer overflow-hidden border-border/50"
-      onClick={onClick}
+      onClick={() => navigate(`/product/${product.id}`)}
     >
       {/* Image Container */}
       <div className="relative aspect-square overflow-hidden bg-muted">

@@ -3,16 +3,15 @@
  * Main shop page with filterable product grid
  */
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Package } from "lucide-react";
 import { ProductCard } from "@/components/ProductCard";
-import { ProductModal } from "@/components/ProductModal";
 import { Button } from "@/components/ui/button";
 import { ProductGridSkeleton } from "@/components/ui/product-skeleton";
 import { useProductsStore } from "@/components/store/products-store";
 import { PageSEO } from "@/components/SEO";
-import type { Product, ProductCategory } from "@/components/types";
+import type { ProductCategory } from "@/components/types";
 
 const categories: { label: string; value: ProductCategory | "all" }[] = [
   { label: "All Jewellery", value: "all" },
@@ -29,7 +28,6 @@ const categories: { label: string; value: ProductCategory | "all" }[] = [
 export function HomePage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const {
     isLoading,
@@ -167,20 +165,12 @@ export function HomePage() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onClick={() => setSelectedProduct(product)}
                 />
               ))}
             </div>
           </>
         )}
       </section>
-
-      {/* Product Modal */}
-      <ProductModal
-        product={selectedProduct}
-        open={!!selectedProduct}
-        onClose={() => setSelectedProduct(null)}
-      />
     </div>
   );
 }
