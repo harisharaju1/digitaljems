@@ -18,8 +18,6 @@ import { AdminDashboard } from "@/components/pages/admin/AdminDashboard";
 import { AdminProducts } from "@/components/pages/admin/AdminProducts";
 import { AdminOrders } from "@/components/pages/admin/AdminOrders";
 import NotFoundPage from "@/components/pages/NotFoundPage";
-import { initAnalytics } from "@/components/lib/analytics";
-import { initErrorTracking } from "@/components/lib/error-tracking";
 import { supabase } from "@/components/lib/supabase";
 import { useAuthStore } from "@/components/store/auth-store";
 import { authService } from "@/components/lib/sdk";
@@ -29,11 +27,8 @@ function App() {
     login: state.login,
   }));
 
-  // Initialize analytics, error tracking, and auth listener
+  // Initialize auth listener
   useEffect(() => {
-    initAnalytics();
-    initErrorTracking();
-
     // Listen for auth state changes (magic link callback)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
