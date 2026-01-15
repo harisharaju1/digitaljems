@@ -396,44 +396,46 @@ export function AdminProducts() {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
+        <DialogContent className="max-h-[85vh] w-[95vw] max-w-2xl overflow-y-auto p-4 sm:p-6">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-lg sm:text-xl">
               {editingProduct ? "Edit Product" : "Add New Product"}
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               Fill in the product details below
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="name">Name *</Label>
+          <div className="grid gap-3 py-2 sm:gap-4 sm:py-4">
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label htmlFor="name" className="text-sm">Name *</Label>
               <Input
                 id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="h-9 sm:h-10"
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label htmlFor="description" className="text-sm">Description</Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
+                rows={2}
+                className="text-sm"
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="grid gap-2">
-                <Label>Category</Label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label className="text-sm">Category</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(v) => setFormData({ ...formData, category: v as ProductCategory })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 sm:h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -446,13 +448,13 @@ export function AdminProducts() {
                 </Select>
               </div>
 
-              <div className="grid gap-2">
-                <Label>Metal Type</Label>
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label className="text-sm">Metal Type</Label>
                 <Select
                   value={formData.metal_type}
                   onValueChange={(v) => setFormData({ ...formData, metal_type: v as MetalType })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 sm:h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -465,13 +467,13 @@ export function AdminProducts() {
                 </Select>
               </div>
 
-              <div className="grid gap-2">
-                <Label>Purity</Label>
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label className="text-sm">Purity</Label>
                 <Select
                   value={formData.metal_purity}
                   onValueChange={(v) => setFormData({ ...formData, metal_purity: v as MetalPurity })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="h-9 sm:h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -485,69 +487,74 @@ export function AdminProducts() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="weight">Weight (grams)</Label>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label htmlFor="weight" className="text-sm">Weight (g)</Label>
                 <Input
                   id="weight"
                   type="number"
                   step="0.01"
                   value={formData.weight_grams}
                   onChange={(e) => setFormData({ ...formData, weight_grams: parseFloat(e.target.value) || 0 })}
+                  className="h-9 sm:h-10"
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="stock">Stock Quantity</Label>
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label htmlFor="stock" className="text-sm">Stock</Label>
                 <Input
                   id="stock"
                   type="number"
                   value={formData.stock_quantity}
                   onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
+                  className="h-9 sm:h-10"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="price">Price (₹) *</Label>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label htmlFor="price" className="text-sm">Price (₹) *</Label>
                 <Input
                   id="price"
                   type="number"
                   value={formData.price}
                   onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                  className="h-9 sm:h-10"
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="mrp">MRP (₹)</Label>
+              <div className="grid gap-1.5 sm:gap-2">
+                <Label htmlFor="mrp" className="text-sm">MRP (₹)</Label>
                 <Input
                   id="mrp"
                   type="number"
                   value={formData.mrp}
                   onChange={(e) => setFormData({ ...formData, mrp: parseFloat(e.target.value) || 0 })}
+                  className="h-9 sm:h-10"
                 />
               </div>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="images">Image URLs (one per line)</Label>
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label htmlFor="images" className="text-sm">Image URLs (one per line)</Label>
               <Textarea
                 id="images"
                 value={imageUrls}
                 onChange={(e) => setImageUrls(e.target.value)}
-                placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-                rows={3}
+                placeholder="https://example.com/image1.jpg"
+                rows={2}
+                className="text-sm"
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label>Status</Label>
+            <div className="grid gap-1.5 sm:gap-2">
+              <Label className="text-sm">Status</Label>
               <Select
                 value={formData.is_active}
                 onValueChange={(v) => setFormData({ ...formData, is_active: v as "active" | "inactive" })}
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9 sm:h-10">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -558,11 +565,11 @@ export function AdminProducts() {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsFormOpen(false)}>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:gap-0 pt-2">
+            <Button variant="outline" onClick={() => setIsFormOpen(false)} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={handleSave} disabled={isSaving} className="w-full sm:w-auto">
               {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editingProduct ? "Update" : "Create"}
             </Button>

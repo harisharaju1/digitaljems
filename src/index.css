@@ -160,6 +160,11 @@
     font-size: 15px;
   }
   
+  /* Fix for mobile viewport height (accounts for browser chrome) */
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+  
   /* Larger touch targets on mobile */
   button, 
   [role="button"],
@@ -174,6 +179,17 @@
   .container select,
   .container textarea {
     font-size: 16px; /* Prevent iOS zoom */
+  }
+  
+  /* Better dialog sizing on mobile */
+  [data-state="open"][role="dialog"] {
+    max-height: 90dvh !important;
+    margin: 1rem;
+  }
+  
+  /* Prevent body scroll when modal is open */
+  body:has([data-state="open"][role="dialog"]) {
+    overflow: hidden;
   }
 }
 

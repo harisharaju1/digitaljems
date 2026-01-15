@@ -154,6 +154,42 @@ export function LoginPage() {
     try {
       const result = await authService.signUpWithPassword(email, password);
       
+      // Check if user already exists (Supabase returns user with empty identities)
+      if (result.user && result.user.identities?.length === 0) {
+        // Try to sign in with the provided password
+        try {
+          const signInResult = await authService.signInWithPassword(email, password);
+          if (signInResult.user) {
+            authService.storeUserInfo(signInResult.user.id, signInResult.user.email || email, "");
+            useAuthStore.setState({
+              isAuthenticated: true,
+              user: {
+                uid: signInResult.user.id,
+                email: signInResult.user.email || email,
+                name: "",
+              },
+            });
+            await useAuthStore.getState().loadProfile();
+            await useAuthStore.getState().checkAdminStatus();
+            toast({
+              title: "Welcome back!",
+              description: "You already have an account - signed you in",
+            });
+            navigate(from, { replace: true });
+            return;
+          }
+        } catch {
+          // Password didn't match, redirect to sign in
+          toast({
+            title: "Account already exists",
+            description: "Please sign in with your correct password",
+            variant: "destructive",
+          });
+          setActiveTab("signin");
+          return;
+        }
+      }
+      
       if (result.user && !result.session) {
         // Email confirmation required
         setSignupSent(true);
@@ -181,9 +217,23 @@ export function LoginPage() {
         navigate(from, { replace: true });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Please try again";
+      
+      // Check for user already registered error
+      if (errorMessage.toLowerCase().includes("already registered") || 
+          errorMessage.toLowerCase().includes("already exists")) {
+        toast({
+          title: "Account already exists",
+          description: "Please sign in instead",
+          variant: "destructive",
+        });
+        setActiveTab("signin");
+        return;
+      }
+      
       toast({
         title: "Sign up failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -254,7 +304,7 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-secondary/30 to-transparent p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md mx-4">
         <CardHeader>
           <CardTitle className="text-2xl">Welcome</CardTitle>
           <CardDescription>
@@ -263,9 +313,9 @@ export function LoginPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as "signin" | "signup"); resetForm(); }}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 h-12">
+              <TabsTrigger value="signin" className="text-sm sm:text-base py-2">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="text-sm sm:text-base py-2">Sign Up</TabsTrigger>
             </TabsList>
 
             <TabsContent value="signin" className="space-y-4 pt-4">
