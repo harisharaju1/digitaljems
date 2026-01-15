@@ -103,7 +103,11 @@ export const useAuthStore = create<AuthState>()(
           
           // Create profile if it doesn't exist
           if (!profile) {
-            profile = await userProfileService.upsertProfile(user.email, "", "");
+            profile = await userProfileService.upsertProfile(
+              user.email, 
+              "New User", 
+              ""
+            );
           }
           
           set({ profile });
