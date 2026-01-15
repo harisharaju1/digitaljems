@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,20 +18,90 @@ import { AdminDashboard } from "@/components/pages/admin/AdminDashboard";
 import { AdminProducts } from "@/components/pages/admin/AdminProducts";
 import { AdminOrders } from "@/components/pages/admin/AdminOrders";
 import NotFoundPage from "@/components/pages/NotFoundPage";
-import { initAnalytics } from "@/components/lib/analytics";
+import { initAnalytics, trackPageView } from "@/components/lib/analytics";
 import { initErrorTracking } from "@/components/lib/error-tracking";
+import { supabase } from "@/components/lib/supabase";
+import { useAuthStore } from "@/components/store/auth-store";
+import { authService } from "@/components/lib/sdk";
+
+// Track page views on route changes
+function PageViewTracker() {
+  const location = useLocation();
+  
+  useEffect(() => {
+    trackPageView(location.pathname, document.title);
+  }, [location]);
+  
+  return null;
+}
 
 function App() {
-  // Initialize analytics and error tracking on app start
+  const setAuth = useAuthStore((state) => ({
+    login: state.login,
+  }));
+
+  // Initialize analytics, error tracking, and auth listener
   useEffect(() => {
     initAnalytics();
     initErrorTracking();
+
+    // Listen for auth state changes (magic link callback)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        // Store user info
+        authService.storeUserInfo(
+          session.user.id,
+          session.user.email || "",
+          ""
+        );
+        
+        // Update auth store
+        useAuthStore.setState({
+          isAuthenticated: true,
+          user: {
+            uid: session.user.id,
+            email: session.user.email || "",
+            name: "",
+          },
+        });
+
+        // Load profile and check admin status
+        await useAuthStore.getState().loadProfile();
+        await useAuthStore.getState().checkAdminStatus();
+      }
+    });
+
+    // Check for existing session on app load
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        authService.storeUserInfo(
+          session.user.id,
+          session.user.email || "",
+          ""
+        );
+        
+        useAuthStore.setState({
+          isAuthenticated: true,
+          user: {
+            uid: session.user.id,
+            email: session.user.email || "",
+            name: "",
+          },
+        });
+
+        await useAuthStore.getState().loadProfile();
+        await useAuthStore.getState().checkAdminStatus();
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return (
     <HelmetProvider>
     <TooltipProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <PageViewTracker />
         <Routes>
           {/* Admin Routes - No Header */}
           <Route path="/admin" element={<AdminLayout />}>

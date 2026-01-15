@@ -100,6 +100,70 @@ export const authService = {
   },
 
   /**
+   * Sign up with email and password
+   */
+  async signUpWithPassword(email: string, password: string) {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Sign in with email and password
+   */
+  async signInWithPassword(email: string, password: string) {
+    const lowerEmail = email.toLowerCase();
+
+    // Dev mode: check if it's a test user
+    if (isDev && DEV_USERS[lowerEmail]) {
+      const testUser = DEV_USERS[lowerEmail];
+      if (password === testUser.password) {
+        const fakeId = `dev-${lowerEmail.replace(/[@.]/g, "-")}`;
+        this.storeUserInfo(fakeId, lowerEmail, testUser.name);
+        return {
+          user: { id: fakeId, email: lowerEmail },
+          session: null,
+        };
+      } else {
+        throw new Error("Invalid password");
+      }
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Update user password
+   */
+  async updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (error) throw error;
+  },
+
+  /**
+   * Check if user has a password set (vs magic link only)
+   */
+  async hasPassword(): Promise<boolean> {
+    const { data } = await supabase.auth.getUser();
+    // Users who signed up with password have identities with provider 'email'
+    return data.user?.app_metadata?.provider === 'email' || 
+           data.user?.identities?.some(i => i.provider === 'email') || false;
+  },
+
+  /**
    * Logout current user
    */
   async logout(): Promise<void> {

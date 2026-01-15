@@ -1,75 +1,69 @@
 /**
- * Error Tracking with Sentry
- * In dev mode, errors are logged to console
+ * Error Tracking - Console-based logging
+ * Errors are logged to console and can be viewed in Vercel logs
  */
 
-import * as Sentry from "@sentry/react";
-
 const isDev = import.meta.env.DEV;
-const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN || "";
 
 export function initErrorTracking() {
   if (isDev) {
-    console.log("[Sentry] Dev mode - errors will be logged to console only");
+    console.log("[ErrorTracking] Dev mode - errors will be logged to console");
     return;
   }
 
-  if (!SENTRY_DSN) {
-    console.warn("[Sentry] DSN not configured - error tracking disabled");
-    return;
-  }
+  // Set up global error handler for uncaught errors
+  window.onerror = (message, source, lineno, colno, error) => {
+    console.error("[ErrorTracking] Uncaught error:", {
+      message,
+      source,
+      lineno,
+      colno,
+      error,
+    });
+  };
 
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    environment: import.meta.env.MODE,
-    integrations: [
-      Sentry.browserTracingIntegration(),
-      Sentry.replayIntegration(),
-    ],
-    // Performance monitoring
-    tracesSampleRate: 0.1, // 10% of transactions
-    // Session replay
-    replaysSessionSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0, // 100% when there's an error
-  });
+  // Handle unhandled promise rejections
+  window.onunhandledrejection = (event) => {
+    console.error("[ErrorTracking] Unhandled promise rejection:", event.reason);
+  };
+
+  console.log("[ErrorTracking] Error tracking initialized");
 }
 
-export function captureException(error: Error, context?: Record<string, any>) {
-  if (isDev) {
-    console.error("[Sentry] Error captured:", error, context);
-    return;
-  }
-
-  Sentry.captureException(error, {
-    extra: context,
+export function captureException(error: Error, context?: Record<string, unknown>) {
+  console.error("[ErrorTracking] Exception:", error.message, {
+    stack: error.stack,
+    context,
   });
 }
 
 export function captureMessage(message: string, level: "info" | "warning" | "error" = "info") {
-  if (isDev) {
-    console.log(`[Sentry] ${level.toUpperCase()}:`, message);
-    return;
-  }
-
-  Sentry.captureMessage(message, level);
+  const logFn = level === "error" ? console.error : level === "warning" ? console.warn : console.log;
+  logFn(`[ErrorTracking] ${level.toUpperCase()}:`, message);
 }
 
 export function setUser(user: { id: string; email?: string; name?: string } | null) {
-  if (isDev) {
-    console.log("[Sentry] User set:", user);
-    return;
-  }
-
   if (user) {
-    Sentry.setUser({
-      id: user.id,
-      email: user.email,
-      username: user.name,
-    });
+    console.log("[ErrorTracking] User context set:", { id: user.id, email: user.email });
   } else {
-    Sentry.setUser(null);
+    console.log("[ErrorTracking] User context cleared");
   }
 }
 
-// Error boundary component for React
-export const ErrorBoundary = Sentry.ErrorBoundary;
+// Simple error boundary fallback - React's built-in error boundaries can use this
+export function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
+        <p className="mt-2 text-gray-600">{error.message}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 rounded bg-primary px-4 py-2 text-white"
+        >
+          Reload page
+        </button>
+      </div>
+    </div>
+  );
+}
