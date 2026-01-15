@@ -78,26 +78,8 @@ function App() {
       await syncSession(session);
     });
 
-    // Simple: reload when returning from background if logged in
-    let wasHidden = false;
-    
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        wasHidden = true;
-      } else if (document.visibilityState === "visible" && wasHidden) {
-        wasHidden = false;
-        // If user is logged in, reload to ensure fresh connection
-        if (useAuthStore.getState().isAuthenticated) {
-          window.location.reload();
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
     return () => {
       subscription.unsubscribe();
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
