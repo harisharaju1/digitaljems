@@ -125,12 +125,7 @@ export function Header() {
             >
               <Heart className="h-5 w-5" />
               {wishlistCount > 0 && (
-                <Badge
-                  variant="default"
-                  className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500"
-                >
-                  {wishlistCount}
-                </Badge>
+                <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-red-500" />
               )}
             </Button>
 

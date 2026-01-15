@@ -130,22 +130,24 @@ export function WishlistPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-2">
+                  <div className="flex gap-2">
                     <Button
-                      size="sm"
+                      size="icon"
+                      variant="outline"
                       onClick={() => handleAddToCart(product)}
                       disabled={product.stock_quantity === 0}
+                      title={product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart"}
                     >
-                      <ShoppingCart className="mr-2 h-4 w-4" />
-                      {product.stock_quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                      <ShoppingCart className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size="icon"
                       onClick={() => handleRemove(product.id, product.name)}
+                      title="Remove from wishlist"
+                      className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Remove
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
