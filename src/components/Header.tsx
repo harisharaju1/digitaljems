@@ -3,7 +3,7 @@
  * Shows logo, navigation, cart, and auth controls
  */
 
-import { ShoppingCart, User, Search, Menu, X, LayoutDashboard, Store } from "lucide-react";
+import { ShoppingCart, User, Search, Menu, X, LayoutDashboard, Store, Heart } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/components/store/auth-store";
 import { useCartStore } from "@/components/store/cart-store";
+import { useWishlistStore } from "@/components/store/wishlist-store";
 import { useProductsStore } from "@/components/store/products-store";
 import { cn } from "@/components/lib/utils";
 
@@ -35,6 +36,7 @@ export function Header() {
   const { isAuthenticated, user, isAdmin, logout } = useAuthStore();
   const isOnAdminPage = location.pathname.startsWith("/admin");
   const { itemCount } = useCartStore();
+  const wishlistCount = useWishlistStore((state) => state.items.length);
   const { searchQuery, setSearchQuery } = useProductsStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -114,6 +116,24 @@ export function Header() {
               <Search className="h-5 w-5" />
             </Button>
 
+            {/* Wishlist */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/wishlist")}
+              className="relative"
+            >
+              <Heart className="h-5 w-5" />
+              {wishlistCount > 0 && (
+                <Badge
+                  variant="default"
+                  className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500"
+                >
+                  {wishlistCount}
+                </Badge>
+              )}
+            </Button>
+
             {/* Cart */}
             <Button
               variant="ghost"
@@ -170,6 +190,9 @@ export function Header() {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/orders")}>
                     My Orders
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/wishlist")}>
+                    My Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/custom-request")}>
                     Custom Requests

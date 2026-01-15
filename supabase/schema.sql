@@ -55,6 +55,8 @@ CREATE TABLE orders (
 CREATE TABLE custom_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   customer_email TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  customer_name TEXT,
   image_url TEXT NOT NULL,
   description TEXT,
   status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'quoted', 'declined')),
@@ -63,6 +65,10 @@ CREATE TABLE custom_requests (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Run this if you already have the table and need to add the columns:
+-- ALTER TABLE custom_requests ADD COLUMN IF NOT EXISTS customer_phone TEXT DEFAULT '';
+-- ALTER TABLE custom_requests ADD COLUMN IF NOT EXISTS customer_name TEXT;
 
 -- User Profiles Table
 CREATE TABLE user_profiles (

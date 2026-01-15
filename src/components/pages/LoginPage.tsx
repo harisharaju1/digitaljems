@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Loader2, Mail, ArrowLeft, Lock, CheckCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, Mail, ArrowLeft, Lock, CheckCircle, Eye, EyeOff, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -32,6 +32,7 @@ export function LoginPage() {
 
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -151,10 +152,19 @@ export function LoginPage() {
       return;
     }
 
+    if (!phone.trim() || phone.length < 10) {
+      toast({
+        title: "Phone number required",
+        description: "Please enter a valid phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const result = await authService.signUpWithPassword(email, password);
+      const result = await authService.signUpWithPassword(email, password, phone);
       
       // Check if user already exists (Supabase returns user with empty identities)
       if (result.user && result.user.identities?.length === 0) {
@@ -245,6 +255,7 @@ export function LoginPage() {
 
   const resetForm = () => {
     setEmail("");
+    setPhone("");
     setPassword("");
     setConfirmPassword("");
     setSignupSent(false);
@@ -411,6 +422,22 @@ export function LoginPage() {
                       placeholder="your@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="signup-phone">Phone Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="signup-phone"
+                      type="tel"
+                      placeholder="+91 98765 43210"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       className="pl-10"
                       disabled={isLoading}
                     />

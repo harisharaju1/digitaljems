@@ -13,6 +13,7 @@ import { LoginPage } from "@/components/pages/LoginPage";
 import { ProfilePage } from "@/components/pages/ProfilePage";
 import { OrderHistoryPage } from "@/components/pages/OrderHistoryPage";
 import { CustomRequestPage } from "@/components/pages/CustomRequestPage";
+import { WishlistPage } from "@/components/pages/WishlistPage";
 import { ProductDetailPage } from "@/components/pages/ProductDetailPage";
 import { AdminLayout } from "@/components/pages/admin/AdminLayout";
 import { AdminDashboard } from "@/components/pages/admin/AdminDashboard";
@@ -150,6 +151,7 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/orders" element={<OrderHistoryPage />} />
                     <Route path="/custom-request" element={<CustomRequestPage />} />
+                    <Route path="/wishlist" element={<WishlistPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
                 </main>

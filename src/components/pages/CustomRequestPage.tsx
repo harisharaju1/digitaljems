@@ -5,7 +5,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Upload, X, Image as ImageIcon, Send, Clock, CheckCircle, MessageSquare } from "lucide-react";
+import { Loader2, Upload, X, Image as ImageIcon, Send, Clock, CheckCircle, MessageSquare, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -33,10 +34,11 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 export function CustomRequestPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, profile } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [description, setDescription] = useState("");
+  const [phone, setPhone] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,8 +51,13 @@ export function CustomRequestPage() {
       return;
     }
 
+    // Pre-fill phone from profile if available
+    if (profile?.phone) {
+      setPhone(profile.phone);
+    }
+
     loadMyRequests();
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, profile]);
 
   const loadMyRequests = async () => {
     if (!user?.email) return;
@@ -125,10 +132,19 @@ export function CustomRequestPage() {
       return;
     }
 
+    if (!phone.trim() || phone.length < 10) {
+      toast({
+        title: "Phone number required",
+        description: "Please enter a valid phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      await customRequestService.submitRequest(selectedFile, description);
+      await customRequestService.submitRequest(selectedFile, description, phone, profile?.name);
       toast({
         title: "Request submitted!",
         description: "We'll review your request and get back to you soon.",
@@ -227,9 +243,27 @@ export function CustomRequestPage() {
                 )}
               </div>
 
+              {/* Phone Number */}
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number *</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="pl-10"
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">We'll contact you on this number</p>
+              </div>
+
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
                   placeholder="Describe what you're looking for...
@@ -248,7 +282,7 @@ export function CustomRequestPage() {
               <Button
                 type="submit"
                 className="btn-premium w-full"
-                disabled={isSubmitting || !selectedFile || !description.trim()}
+                disabled={isSubmitting || !selectedFile || !description.trim() || !phone.trim()}
               >
                 {isSubmitting ? (
                   <>

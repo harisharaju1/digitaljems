@@ -102,15 +102,37 @@ export const authService = {
   /**
    * Sign up with email and password
    */
-  async signUpWithPassword(email: string, password: string) {
+  async signUpWithPassword(email: string, password: string, phone?: string) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: window.location.origin,
+        data: {
+          phone: phone || "",
+        },
       },
     });
     if (error) throw error;
+    
+    // Create user profile with phone if provided
+    if (data.user && phone) {
+      try {
+        await supabase.from("user_profiles").upsert({
+          email: email.toLowerCase(),
+          phone,
+          name: "",
+          saved_addresses: JSON.stringify([]),
+          role: "customer",
+          is_admin: "false",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'email' });
+      } catch (e) {
+        console.error("Failed to create profile with phone:", e);
+      }
+    }
+    
     return data;
   },
 
@@ -636,7 +658,9 @@ export const customRequestService = {
    */
   async submitRequest(
     imageFile: File,
-    description: string
+    description: string,
+    phone: string,
+    name?: string
   ): Promise<CustomRequest> {
     const email = authService.getCurrentUserEmail();
     if (!email) throw new Error("Authentication required");
@@ -647,6 +671,8 @@ export const customRequestService = {
     const now = new Date().toISOString();
     const request = {
       customer_email: email,
+      customer_phone: phone,
+      customer_name: name || "",
       image_url: imageUrl,
       description,
       status: "pending",

@@ -110,6 +110,8 @@ export interface CartItem {
 export interface CustomRequest {
   id: string;
   customer_email: string;
+  customer_phone: string;
+  customer_name?: string;
   image_url: string;
   description: string;
   status: CustomRequestStatus;

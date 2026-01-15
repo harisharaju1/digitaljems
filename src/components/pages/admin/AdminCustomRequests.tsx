@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Loader2, MessageSquare, Send, Image as ImageIcon, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+import { Loader2, MessageSquare, Send, Image as ImageIcon, Clock, CheckCircle, XCircle, AlertCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -272,8 +272,27 @@ export function AdminCustomRequests() {
               {/* Customer Info */}
               <div>
                 <p className="text-sm text-muted-foreground">Customer</p>
+                {selectedRequest.customer_name && (
+                  <p className="font-medium">{selectedRequest.customer_name}</p>
+                )}
                 <p className="font-medium">{selectedRequest.customer_email}</p>
-                <p className="text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 mt-1">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <a 
+                    href={`tel:${selectedRequest.customer_phone}`}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    {selectedRequest.customer_phone}
+                  </a>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`https://wa.me/${selectedRequest.customer_phone.replace(/[^0-9]/g, '')}`, '_blank')}
+                  >
+                    WhatsApp
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
                   Submitted {formatDate(selectedRequest.created_at)}
                 </p>
               </div>
