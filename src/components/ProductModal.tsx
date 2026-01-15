@@ -50,8 +50,8 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
   // Handle scroll to shrink image on mobile
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const scrollTop = e.currentTarget.scrollTop;
-    // Scale from 1 to 0.4 over 200px scroll
-    const newScale = Math.max(0.4, 1 - scrollTop / 200);
+    // Scale from 1 to 0.25 over 300px scroll (70vh down to ~17vh)
+    const newScale = Math.max(0.25, 1 - scrollTop / 300);
     setImageScale(newScale);
   }, []);
 
@@ -343,22 +343,22 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="absolute right-2 top-2 z-10 h-8 w-8 bg-background/80 backdrop-blur"
+            className="absolute right-2 top-2 z-20 h-8 w-8 bg-background/80 backdrop-blur"
           >
             <X className="h-4 w-4" />
           </Button>
 
-          {/* Collapsible Image Section */}
+          {/* Collapsible Image Section - starts at 70vh, shrinks to 120px */}
           <div 
-            className="sticky top-0 z-0 bg-muted transition-all duration-150 ease-out overflow-hidden"
+            className="sticky top-0 z-0 bg-muted transition-all duration-200 ease-out overflow-hidden"
             style={{ 
-              height: `${Math.max(150, 400 * imageScale)}px`,
-              minHeight: '150px'
+              height: `${Math.max(120, 70 * imageScale)}vh`,
+              minHeight: '120px'
             }}
           >
             <div className="relative h-full w-full">
               <button 
-                className="flex h-full w-full items-center justify-center p-2"
+                className="flex h-full w-full items-center justify-center p-4"
                 onClick={() => setMobileFullscreen(true)}
               >
                 <ProductImage
@@ -366,11 +366,15 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   alt={`${product.name} - Image ${currentImageIndex + 1}`}
                   className="max-h-full max-w-full object-contain"
                 />
-                <div className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs text-white flex items-center gap-1">
-                  <ZoomIn className="h-3 w-3" />
-                  Tap to zoom
-                </div>
               </button>
+
+              {/* Scroll hint at bottom */}
+              {imageScale > 0.8 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center text-muted-foreground animate-bounce">
+                  <span className="text-xs mb-1">Swipe up for details</span>
+                  <ChevronLeft className="h-4 w-4 rotate-[-90deg]" />
+                </div>
+              )}
 
               {/* Navigation Arrows */}
               {product.images.length > 1 && (
@@ -378,40 +382,43 @@ export function ProductModal({ product, open, onClose }: ProductModalProps) {
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-80"
-                    onClick={handlePrevImage}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 opacity-80"
+                    onClick={(e) => { e.stopPropagation(); handlePrevImage(); }}
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-5 w-5" />
                   </Button>
                   <Button
                     variant="secondary"
                     size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 opacity-80"
-                    onClick={handleNextImage}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 opacity-80"
+                    onClick={(e) => { e.stopPropagation(); handleNextImage(); }}
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-5 w-5" />
                   </Button>
                 </>
               )}
 
-              {/* Image Counter */}
-              {product.images.length > 1 && (
-                <div className="absolute left-2 bottom-2 rounded bg-black/60 px-2 py-0.5 text-xs text-white">
-                  {currentImageIndex + 1} / {product.images.length}
-                </div>
-              )}
+              {/* Image Counter & Zoom hint */}
+              <div className="absolute left-2 top-2 rounded bg-black/60 px-2 py-1 text-xs text-white flex items-center gap-2">
+                {product.images.length > 1 && (
+                  <span>{currentImageIndex + 1} / {product.images.length}</span>
+                )}
+                <span className="flex items-center gap-1">
+                  <ZoomIn className="h-3 w-3" /> Tap
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Thumbnail Strip - Mobile */}
-          {product.images.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto border-b bg-background px-4 py-3 scrollbar-hide">
+          {/* Thumbnail Strip - Mobile (only show when image is shrunk) */}
+          {product.images.length > 1 && imageScale < 0.7 && (
+            <div className="flex gap-2 overflow-x-auto border-b bg-background px-4 py-2 scrollbar-hide">
               {product.images.map((image, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentImageIndex(index)}
                   className={cn(
-                    "h-12 w-12 flex-shrink-0 overflow-hidden rounded border-2 transition-all",
+                    "h-10 w-10 flex-shrink-0 overflow-hidden rounded border-2 transition-all",
                     currentImageIndex === index
                       ? "border-primary"
                       : "border-transparent opacity-60"
