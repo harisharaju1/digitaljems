@@ -33,7 +33,7 @@ export function ProductDetailPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const addItem = useCartStore((state) => state.addItem);
-  const { products, fetchProducts, isLoading } = useProductsStore();
+  const { products, loadProducts, isLoading } = useProductsStore();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -41,9 +41,9 @@ export function ProductDetailPage() {
 
   useEffect(() => {
     if (products.length === 0) {
-      fetchProducts();
+      loadProducts();
     }
-  }, [products.length, fetchProducts]);
+  }, [products.length, loadProducts]);
 
   const product = products.find((p) => p.id === id);
 
