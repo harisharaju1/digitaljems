@@ -16,28 +16,70 @@ import {
   Ruler,
   Scale,
   X,
+  Heart,
+  Share2,
+  Gem,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import type { Product } from "@/components/types";
 import { useCartStore } from "@/components/store/cart-store";
+import { useWishlistStore } from "@/components/store/wishlist-store";
 import { useProductsStore } from "@/components/store/products-store";
 import { useToast } from "@/components/hooks/use-toast";
 import { cn } from "@/components/lib/utils";
 import { ProductImage } from "@/components/ui/product-image";
-import { Loader2 } from "lucide-react";
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const addItem = useCartStore((state) => state.addItem);
+  const { isInWishlist, toggleItem } = useWishlistStore();
   const { products, loadProducts, isLoading } = useProductsStore();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [fullscreenImage, setFullscreenImage] = useState(false);
+
+  const product = products.find((p) => p.id === id);
+  const inWishlist = product ? isInWishlist(product.id) : false;
+
+  const handleToggleWishlist = () => {
+    if (!product) return;
+    toggleItem(product);
+    toast({
+      title: inWishlist ? "Removed from wishlist" : "Added to wishlist",
+      description: inWishlist
+        ? `${product.name} removed from your wishlist.`
+        : `${product.name} added to your wishlist.`,
+    });
+  };
+
+  const handleShare = async () => {
+    if (!product) return;
+    const url = window.location.href;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Check out this ${product.name} - ₹${product.price.toLocaleString("en-IN")}`,
+          url,
+        });
+      } catch (err) {
+        // User cancelled or share failed
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied",
+        description: "Product link copied to clipboard",
+      });
+    }
+  };
 
   useEffect(() => {
     // Ensure scroll to top on mount
@@ -64,8 +106,6 @@ export function ProductDetailPage() {
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [products.length, loadProducts]);
-
-  const product = products.find((p) => p.id === id);
 
   if (isLoading) {
     return (
@@ -204,9 +244,24 @@ export function ProductDetailPage() {
 
           {/* Right: Details */}
           <div className="space-y-6">
-            {/* Title */}
+            {/* Title & Actions */}
             <div>
-              <h1 className="text-3xl font-bold">{product.name}</h1>
+              <div className="flex items-start justify-between gap-4">
+                <h1 className="text-3xl font-bold">{product.name}</h1>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={cn(inWishlist && "text-red-500 border-red-200")}
+                    onClick={handleToggleWishlist}
+                  >
+                    <Heart className={cn("h-5 w-5", inWishlist && "fill-current")} />
+                  </Button>
+                  <Button variant="outline" size="icon" onClick={handleShare}>
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
               <p className="mt-1 text-muted-foreground">
                 <span className="capitalize">{product.metal_type.replace("_", " ")}</span>
                 {" • "}
@@ -247,17 +302,37 @@ export function ProductDetailPage() {
               </div>
             </div>
 
+            {/* Certifications */}
+            <div className="flex items-center gap-8 rounded-lg border bg-muted/30 p-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-amber-600">BIS</span>
+                <span className="text-sm text-muted-foreground">Hallmark Certified</span>
+              </div>
+              <div className="h-8 w-px bg-border" />
+              <div className="flex items-center gap-2">
+                <span className="text-xl font-bold text-blue-600">IGI</span>
+                <span className="text-sm text-muted-foreground">Certified Diamonds</span>
+              </div>
+            </div>
+
             <Separator />
 
             {/* Product Details */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold">Product Details</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className={cn("grid gap-4", product.stone_weight ? "grid-cols-4" : "grid-cols-3")}>
                 <div className="rounded-lg bg-muted p-4 text-center">
                   <Scale className="mx-auto h-5 w-5 text-muted-foreground mb-2" />
                   <p className="font-semibold">{product.weight_grams}g</p>
                   <p className="text-sm text-muted-foreground">Weight</p>
                 </div>
+                {product.stone_weight && (
+                  <div className="rounded-lg bg-muted p-4 text-center">
+                    <Gem className="mx-auto h-5 w-5 text-muted-foreground mb-2" />
+                    <p className="font-semibold">{product.stone_weight}ct</p>
+                    <p className="text-sm text-muted-foreground">Stone</p>
+                  </div>
+                )}
                 <div className="rounded-lg bg-muted p-4 text-center">
                   <Ruler className="mx-auto h-5 w-5 text-muted-foreground mb-2" />
                   <p className="font-semibold uppercase">{product.metal_purity}</p>
@@ -410,9 +485,24 @@ export function ProductDetailPage() {
 
         {/* Product Info */}
         <div className="px-4 py-6 space-y-5">
-          {/* Title */}
+          {/* Title & Actions */}
           <div>
-            <h1 className="text-xl font-bold">{product.name}</h1>
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-xl font-bold">{product.name}</h1>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn("h-9 w-9", inWishlist && "text-red-500 border-red-200")}
+                  onClick={handleToggleWishlist}
+                >
+                  <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
+                </Button>
+                <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleShare}>
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
             <p className="text-sm text-muted-foreground">
               <span className="capitalize">{product.metal_type.replace("_", " ")}</span>
               {" • "}
@@ -444,12 +534,19 @@ export function ProductDetailPage() {
           </div>
 
           {/* Details Grid */}
-          <div className="grid grid-cols-3 gap-2 text-center text-sm">
+          <div className={cn("grid gap-2 text-center text-sm", product.stone_weight ? "grid-cols-4" : "grid-cols-3")}>
             <div className="rounded-lg bg-muted p-3">
               <Scale className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
               <p className="font-medium">{product.weight_grams}g</p>
               <p className="text-xs text-muted-foreground">Weight</p>
             </div>
+            {product.stone_weight && (
+              <div className="rounded-lg bg-muted p-3">
+                <Gem className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
+                <p className="font-medium">{product.stone_weight}ct</p>
+                <p className="text-xs text-muted-foreground">Stone</p>
+              </div>
+            )}
             <div className="rounded-lg bg-muted p-3">
               <Ruler className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
               <p className="font-medium uppercase">{product.metal_purity}</p>
@@ -459,6 +556,19 @@ export function ProductDetailPage() {
               <Package className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
               <p className="font-medium">{product.stock_quantity}</p>
               <p className="text-xs text-muted-foreground">In Stock</p>
+            </div>
+          </div>
+
+          {/* Certifications */}
+          <div className="flex items-center justify-center gap-6 rounded-lg border bg-muted/30 p-4">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-lg font-bold text-amber-600">BIS</span>
+              <span className="text-muted-foreground">Hallmark</span>
+            </div>
+            <div className="h-6 w-px bg-border" />
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-lg font-bold text-blue-600">IGI</span>
+              <span className="text-muted-foreground">Certified</span>
             </div>
           </div>
 

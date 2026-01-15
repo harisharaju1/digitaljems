@@ -36,6 +36,7 @@ const emptyForm: ProductFormData = {
   metal_type: "gold",
   metal_purity: "22k",
   weight_grams: 0,
+  stone_weight: undefined,
   price: 0,
   mrp: 0,
   making_charges_saved: 0,
@@ -75,6 +76,7 @@ export function AdminProductForm() {
           metal_type: product.metal_type,
           metal_purity: product.metal_purity,
           weight_grams: product.weight_grams,
+          stone_weight: product.stone_weight,
           price: product.price,
           mrp: product.mrp,
           making_charges_saved: product.making_charges_saved,
@@ -306,15 +308,30 @@ export function AdminProductForm() {
           </div>
 
           {/* Weight and Stock */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="weight">Weight (g)</Label>
+              <Label htmlFor="weight">Metal Weight (g)</Label>
               <Input
                 id="weight"
                 type="number"
                 step="0.01"
-                value={formData.weight_grams}
-                onChange={(e) => setFormData({ ...formData, weight_grams: parseFloat(e.target.value) || 0 })}
+                min="0"
+                value={formData.weight_grams || ""}
+                onChange={(e) => setFormData({ ...formData, weight_grams: e.target.value === "" ? 0 : parseFloat(e.target.value) })}
+                placeholder="0"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="stone_weight">Stone Weight (ct)</Label>
+              <Input
+                id="stone_weight"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.stone_weight ?? ""}
+                onChange={(e) => setFormData({ ...formData, stone_weight: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                placeholder="Optional"
               />
             </div>
 
@@ -323,8 +340,10 @@ export function AdminProductForm() {
               <Input
                 id="stock"
                 type="number"
-                value={formData.stock_quantity}
-                onChange={(e) => setFormData({ ...formData, stock_quantity: parseInt(e.target.value) || 0 })}
+                min="0"
+                value={formData.stock_quantity || ""}
+                onChange={(e) => setFormData({ ...formData, stock_quantity: e.target.value === "" ? 0 : parseInt(e.target.value) })}
+                placeholder="0"
               />
             </div>
           </div>
@@ -336,8 +355,10 @@ export function AdminProductForm() {
               <Input
                 id="price"
                 type="number"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                min="0"
+                value={formData.price || ""}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value === "" ? 0 : parseFloat(e.target.value) })}
+                placeholder="0"
               />
             </div>
 
@@ -346,8 +367,10 @@ export function AdminProductForm() {
               <Input
                 id="mrp"
                 type="number"
-                value={formData.mrp}
-                onChange={(e) => setFormData({ ...formData, mrp: parseFloat(e.target.value) || 0 })}
+                min="0"
+                value={formData.mrp || ""}
+                onChange={(e) => setFormData({ ...formData, mrp: e.target.value === "" ? 0 : parseFloat(e.target.value) })}
+                placeholder="0"
               />
             </div>
           </div>

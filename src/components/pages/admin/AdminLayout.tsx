@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, NavLink, Link } from "react-router-dom";
-import { Package, ShoppingCart, LayoutDashboard, LogOut, Menu, X, Home } from "lucide-react";
+import { Package, ShoppingCart, LayoutDashboard, LogOut, Menu, X, Home, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useAuthStore } from "@/components/store/auth-store";
@@ -15,6 +15,7 @@ const navItems = [
   { path: "/admin", icon: LayoutDashboard, label: "Dashboard", exact: true },
   { path: "/admin/products", icon: Package, label: "Products" },
   { path: "/admin/orders", icon: ShoppingCart, label: "Orders" },
+  { path: "/admin/custom-requests", icon: MessageSquare, label: "Custom" },
 ];
 
 export function AdminLayout() {

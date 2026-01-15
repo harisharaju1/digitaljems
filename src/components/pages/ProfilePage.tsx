@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, User, Phone, Mail, MapPin, Plus, Trash2, Lock, Eye, EyeOff } from "lucide-react";
+import { Loader2, User, Phone, Mail, MapPin, Plus, Trash2, Lock, Eye, EyeOff, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,12 +13,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/hooks/use-toast";
 import { useAuthStore } from "@/components/store/auth-store";
-import { authService } from "@/components/lib/sdk";
+import { authService, userProfileService } from "@/components/lib/sdk";
+import type { ShippingAddress } from "@/components/types";
 
 export function ProfilePage() {
   const navigate = useNavigate();
@@ -34,6 +43,18 @@ export function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Address management
+  const [showAddressDialog, setShowAddressDialog] = useState(false);
+  const [isSavingAddress, setIsSavingAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState<ShippingAddress>({
+    line1: "",
+    line2: "",
+    city: "",
+    state: "",
+    pincode: "",
+    country: "India",
+  });
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -113,6 +134,78 @@ export function ProfilePage() {
       });
     } finally {
       setIsChangingPassword(false);
+    }
+  };
+
+  const handleAddAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!newAddress.line1 || !newAddress.city || !newAddress.state || !newAddress.pincode) {
+      toast({
+        title: "Missing fields",
+        description: "Please fill in all required address fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!user?.email) return;
+
+    setIsSavingAddress(true);
+
+    try {
+      await userProfileService.addSavedAddress(user.email, newAddress);
+      await useAuthStore.getState().loadProfile();
+      setShowAddressDialog(false);
+      setNewAddress({
+        line1: "",
+        line2: "",
+        city: "",
+        state: "",
+        pincode: "",
+        country: "India",
+      });
+      toast({
+        title: "Address saved",
+        description: "Your new address has been added.",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to save address",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingAddress(false);
+    }
+  };
+
+  const handleDeleteAddress = async (index: number) => {
+    if (!user?.email || !profile) return;
+
+    try {
+      const updatedAddresses = profile.saved_addresses.filter((_, i) => i !== index);
+      // We need to update the profile with the new addresses array
+      const { supabase } = await import("@/components/lib/supabase");
+      await supabase
+        .from("user_profiles")
+        .update({
+          saved_addresses: JSON.stringify(updatedAddresses),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("email", user.email);
+      
+      await useAuthStore.getState().loadProfile();
+      toast({
+        title: "Address deleted",
+        description: "The address has been removed.",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to delete address",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
     }
   };
 
@@ -203,13 +296,109 @@ export function ProfilePage() {
       {/* Saved Addresses */}
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Saved Addresses
-          </CardTitle>
-          <CardDescription>
-            Manage your delivery addresses
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-5 w-5" />
+                Saved Addresses
+              </CardTitle>
+              <CardDescription>
+                Manage your delivery addresses
+              </CardDescription>
+            </div>
+            <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
+              <DialogTrigger asChild>
+                <Button size="sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Address
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Address</DialogTitle>
+                  <DialogDescription>
+                    Add a new delivery address to your account.
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleAddAddress} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="line1">Address Line 1 *</Label>
+                    <Input
+                      id="line1"
+                      placeholder="House/Flat No., Building Name"
+                      value={newAddress.line1}
+                      onChange={(e) => setNewAddress({ ...newAddress, line1: e.target.value })}
+                      disabled={isSavingAddress}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="line2">Address Line 2</Label>
+                    <Input
+                      id="line2"
+                      placeholder="Street, Locality (Optional)"
+                      value={newAddress.line2 || ""}
+                      onChange={(e) => setNewAddress({ ...newAddress, line2: e.target.value })}
+                      disabled={isSavingAddress}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        placeholder="City"
+                        value={newAddress.city}
+                        onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                        disabled={isSavingAddress}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="state">State *</Label>
+                      <Input
+                        id="state"
+                        placeholder="State"
+                        value={newAddress.state}
+                        onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
+                        disabled={isSavingAddress}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pincode">Pincode *</Label>
+                      <Input
+                        id="pincode"
+                        placeholder="6-digit PIN"
+                        value={newAddress.pincode}
+                        onChange={(e) => setNewAddress({ ...newAddress, pincode: e.target.value })}
+                        disabled={isSavingAddress}
+                        maxLength={6}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="country">Country</Label>
+                      <Input
+                        id="country"
+                        value={newAddress.country}
+                        onChange={(e) => setNewAddress({ ...newAddress, country: e.target.value })}
+                        disabled={isSavingAddress}
+                      />
+                    </div>
+                  </div>
+                  <Button type="submit" className="w-full btn-premium" disabled={isSavingAddress}>
+                    {isSavingAddress ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Address"
+                    )}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
         </CardHeader>
         <CardContent>
           {profile?.saved_addresses && profile.saved_addresses.length > 0 ? (
@@ -220,14 +409,19 @@ export function ProfilePage() {
                   className="flex items-start justify-between rounded-lg border p-4"
                 >
                   <div className="text-sm">
-                    <p>{address.line1}</p>
+                    <p className="font-medium">{address.line1}</p>
                     {address.line2 && <p>{address.line2}</p>}
                     <p>
                       {address.city}, {address.state} {address.pincode}
                     </p>
-                    <p>{address.country}</p>
+                    <p className="text-muted-foreground">{address.country}</p>
                   </div>
-                  <Button variant="ghost" size="icon" className="text-destructive">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteAddress(index)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -235,7 +429,7 @@ export function ProfilePage() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">
-              No saved addresses yet. Addresses will be saved when you place orders.
+              No saved addresses yet. Click "Add Address" to save your delivery address.
             </p>
           )}
         </CardContent>

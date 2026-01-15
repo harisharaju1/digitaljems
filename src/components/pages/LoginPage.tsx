@@ -38,8 +38,10 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [signupSent, setSignupSent] = useState(false);
 
-  const from =
+  const rawFrom =
     (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
+  // Prevent redirect loop - if from is login page, go to home
+  const from = rawFrom === "/login" ? "/" : rawFrom;
 
   // Listen for auth state changes (magic link callback)
   useEffect(() => {

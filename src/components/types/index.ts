@@ -11,6 +11,7 @@ export interface Product {
   metal_type: MetalType;
   metal_purity: MetalPurity;
   weight_grams: number;
+  stone_weight?: number; // Diamond/stone weight in carats
   price: number;
   mrp: number;
   making_charges_saved: number;
@@ -172,6 +173,7 @@ export interface ProductFormData {
   metal_type: MetalType;
   metal_purity: MetalPurity;
   weight_grams: number;
+  stone_weight?: number;
   price: number;
   mrp: number;
   making_charges_saved: number;

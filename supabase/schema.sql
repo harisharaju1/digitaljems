@@ -13,6 +13,7 @@ CREATE TABLE products (
   metal_type TEXT NOT NULL CHECK (metal_type IN ('gold', 'silver', 'platinum', 'white_gold', 'rose_gold')),
   metal_purity TEXT NOT NULL CHECK (metal_purity IN ('24k', '22k', '18k', '14k', '925_silver', '950_platinum')),
   weight_grams DECIMAL(10,2) NOT NULL,
+  stone_weight DECIMAL(10,2), -- Diamond/stone weight in carats (optional)
   price DECIMAL(12,2) NOT NULL,
   mrp DECIMAL(12,2) NOT NULL,
   making_charges_saved DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -22,6 +23,9 @@ CREATE TABLE products (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Run this if you already have the table and need to add the column:
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_weight DECIMAL(10,2);
 
 -- Orders Table
 CREATE TABLE orders (

@@ -3,7 +3,7 @@
  * Displays product in grid with hover effects
  */
 
-import { ShoppingCart, Sparkles } from "lucide-react";
+import { ShoppingCart, Sparkles, Heart, Share2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { ProductImage } from "@/components/ui/product-image";
 import type { Product } from "@/components/types";
 import { useCartStore } from "@/components/store/cart-store";
+import { useWishlistStore } from "@/components/store/wishlist-store";
 import { useToast } from "@/components/hooks/use-toast";
+import { cn } from "@/components/lib/utils";
 
 interface ProductCardProps {
   product: Product;
@@ -20,7 +22,9 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const navigate = useNavigate();
   const addItem = useCartStore((state) => state.addItem);
+  const { isInWishlist, toggleItem } = useWishlistStore();
   const { toast } = useToast();
+  const inWishlist = isInWishlist(product.id);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -29,6 +33,40 @@ export function ProductCard({ product }: ProductCardProps) {
       title: "Added to cart",
       description: `${product.name} has been added to your cart.`,
     });
+  };
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleItem(product);
+    toast({
+      title: inWishlist ? "Removed from wishlist" : "Added to wishlist",
+      description: inWishlist
+        ? `${product.name} removed from your wishlist.`
+        : `${product.name} added to your wishlist.`,
+    });
+  };
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/product/${product.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Check out this ${product.name} - ₹${product.price.toLocaleString("en-IN")}`,
+          url,
+        });
+      } catch (err) {
+        // User cancelled or share failed
+      }
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({
+        title: "Link copied",
+        description: "Product link copied to clipboard",
+      });
+    }
   };
 
   const savings = product.making_charges_saved;
@@ -56,6 +94,29 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
           </div>
         )}
+
+        {/* Wishlist & Share Buttons */}
+        <div className="absolute right-3 top-3 flex flex-col gap-2">
+          <Button
+            variant="secondary"
+            size="icon"
+            className={cn(
+              "h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white",
+              inWishlist && "text-red-500"
+            )}
+            onClick={handleToggleWishlist}
+          >
+            <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-8 w-8 rounded-full bg-white/90 backdrop-blur-sm shadow-sm hover:bg-white"
+            onClick={handleShare}
+          >
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
 
         {/* Quick Add Button - Shows on hover */}
         <div className="absolute inset-x-0 bottom-0 translate-y-full bg-gradient-to-t from-black/60 to-transparent p-4 transition-transform duration-300 group-hover:translate-y-0">

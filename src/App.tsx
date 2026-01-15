@@ -21,6 +21,7 @@ import { AdminProductForm } from "@/components/pages/admin/AdminProductForm";
 import { AdminOrders } from "@/components/pages/admin/AdminOrders";
 import { AdminOrderDetail } from "@/components/pages/admin/AdminOrderDetail";
 import { AdminOrderUpdate } from "@/components/pages/admin/AdminOrderUpdate";
+import { AdminCustomRequests } from "@/components/pages/admin/AdminCustomRequests";
 import NotFoundPage from "@/components/pages/NotFoundPage";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { supabase } from "@/components/lib/supabase";
@@ -126,6 +127,7 @@ function App() {
             <Route path="orders" element={<AdminOrders />} />
             <Route path="orders/:id" element={<AdminOrderDetail />} />
             <Route path="orders/:id/update" element={<AdminOrderUpdate />} />
+            <Route path="custom-requests" element={<AdminCustomRequests />} />
           </Route>
 
           {/* Customer Routes - With Header & Footer */}
