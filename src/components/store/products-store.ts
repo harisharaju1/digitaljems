@@ -41,9 +41,24 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       const products = await productService.getAllProducts();
       set({ products, isLoading: false });
     } catch (error) {
+      console.error("Failed to load products:", error);
+      
+      // If error might be auth-related, try once more after a brief delay
+      const errorMsg = error instanceof Error ? error.message : "Failed to load products";
+      if (errorMsg.includes("JWT") || errorMsg.includes("token") || errorMsg.includes("auth")) {
+        // Wait a moment for session to refresh, then retry
+        await new Promise(resolve => setTimeout(resolve, 500));
+        try {
+          const products = await productService.getAllProducts();
+          set({ products, isLoading: false });
+          return;
+        } catch (retryError) {
+          console.error("Retry failed:", retryError);
+        }
+      }
+      
       set({
-        error:
-          error instanceof Error ? error.message : "Failed to load products",
+        error: errorMsg,
         isLoading: false,
       });
     }

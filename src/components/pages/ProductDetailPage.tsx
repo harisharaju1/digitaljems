@@ -40,6 +40,13 @@ export function ProductDetailPage() {
   const [fullscreenImage, setFullscreenImage] = useState(false);
 
   useEffect(() => {
+    // Ensure scroll to top on mount
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [id]);
+
+  useEffect(() => {
     if (products.length === 0) {
       loadProducts();
     }

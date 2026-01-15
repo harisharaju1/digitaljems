@@ -148,7 +148,8 @@ export function AdminDashboard() {
               {recentOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4"
+                  onClick={() => navigate(`/admin/orders/${order.id}`)}
+                  className="flex flex-col gap-2 rounded-lg border p-3 sm:flex-row sm:items-center sm:justify-between sm:p-4 cursor-pointer hover:bg-muted/50 transition-colors"
                 >
                   <div className="min-w-0">
                     <p className="font-medium text-sm sm:text-base truncate">{order.order_number}</p>

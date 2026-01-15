@@ -79,28 +79,62 @@ function App() {
     });
 
     // Refresh session when tab becomes visible (after phone lock/tab switch)
-    const handleVisibilityChange = () => {
+    const handleVisibilityChange = async () => {
       if (document.visibilityState === "visible") {
-        supabase.auth.getSession().then(async ({ data: { session } }) => {
+        try {
+          // First try to get the current session
+          const { data: { session } } = await supabase.auth.getSession();
+          
           if (session) {
-            // Try to refresh the session
+            // Session exists, try to refresh the token
             const { data, error } = await supabase.auth.refreshSession();
             if (error) {
               console.error("Session refresh failed:", error);
+              // Sign out to clear stale session
+              await supabase.auth.signOut();
               await syncSession(null);
-            } else {
+            } else if (data.session) {
               await syncSession(data.session);
             }
+          } else {
+            // No session, ensure state is cleared
+            const authState = useAuthStore.getState();
+            if (authState.isAuthenticated) {
+              // State says logged in but no session - clear it
+              await syncSession(null);
+            }
           }
-        });
+        } catch (err) {
+          console.error("Visibility change error:", err);
+        }
       }
     };
 
+    // Also handle window focus for mobile browsers
+    const handleFocus = () => {
+      handleVisibilityChange();
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    // Periodic session check every 30 seconds when visible
+    const sessionCheckInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && useAuthStore.getState().isAuthenticated) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) {
+            console.log("Session expired, clearing auth state");
+            syncSession(null);
+          }
+        });
+      }
+    }, 30000);
 
     return () => {
       subscription.unsubscribe();
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+      clearInterval(sessionCheckInterval);
     };
   }, []);
 
