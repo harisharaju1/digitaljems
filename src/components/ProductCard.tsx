@@ -130,13 +130,6 @@ export function ProductCard({ product }: ProductCardProps) {
           </Button>
         </div>
 
-        {/* Low Stock Badge */}
-        {product.stock_quantity > 0 && product.stock_quantity <= 5 && (
-          <Badge variant="destructive" className="absolute right-3 top-3">
-            Only {product.stock_quantity} left
-          </Badge>
-        )}
-
         {/* Out of Stock Overlay */}
         {product.stock_quantity === 0 && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/60">

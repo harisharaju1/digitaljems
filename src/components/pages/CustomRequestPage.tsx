@@ -338,7 +338,12 @@ export function CustomRequestPage() {
                             <p className="text-sm text-muted-foreground">
                               {formatDate(request.created_at)}
                             </p>
-                            <Badge className={status.color}>{status.label}</Badge>
+                            <div className={`p-1.5 rounded-full ${status.color}`} title={status.label}>
+                              {status.label === "Pending Review" && <Clock className="h-4 w-4" />}
+                              {status.label === "Under Review" && <MessageSquare className="h-4 w-4" />}
+                              {status.label === "Quote Sent" && <CheckCircle className="h-4 w-4" />}
+                              {status.label === "Declined" && <X className="h-4 w-4" />}
+                            </div>
                           </div>
                           <p className="line-clamp-2 text-sm">
                             {request.description}
