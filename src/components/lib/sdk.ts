@@ -42,6 +42,7 @@ export const authService = {
       email,
       options: {
         shouldCreateUser: true,
+        emailRedirectTo: undefined, // Use OTP code, not magic link
       },
     });
     if (error) throw error;
