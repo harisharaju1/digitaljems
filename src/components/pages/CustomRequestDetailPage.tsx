@@ -57,6 +57,7 @@ export function CustomRequestDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [newComment, setNewComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -212,12 +213,16 @@ export function CustomRequestDetailPage() {
             <CardContent className="pt-6">
               <h2 className="text-lg font-semibold mb-4">Reference Image</h2>
               <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
-                <img
-                  src={request.image_url}
-                  alt="Request reference"
-                  className="h-full w-full object-contain cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => window.open(request.image_url, '_blank')}
-                />
+                <button
+                  className="flex h-full w-full items-center justify-center"
+                  onClick={() => setFullscreenImage(true)}
+                >
+                  <img
+                    src={request.image_url}
+                    alt="Request reference"
+                    className="h-full w-full object-contain cursor-zoom-in"
+                  />
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -349,6 +354,31 @@ export function CustomRequestDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Fullscreen Image Viewer */}
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="flex items-center justify-between p-4">
+            <span className="text-white text-sm">Reference Image</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setFullscreenImage(false)}
+              className="text-white hover:bg-white/20"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+            <img
+              src={request.image_url}
+              alt="Request reference"
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

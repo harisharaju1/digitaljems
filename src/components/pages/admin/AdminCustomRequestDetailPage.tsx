@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, MessageSquare, Send, Phone, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Send, Phone, Image as ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -57,6 +57,7 @@ export function AdminCustomRequestDetailPage() {
   const [responseText, setResponseText] = useState("");
   const [estimatedPrice, setEstimatedPrice] = useState("");
   const [newStatus, setNewStatus] = useState<CustomRequestStatus>("reviewed");
+  const [fullscreenImage, setFullscreenImage] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -222,12 +223,16 @@ export function AdminCustomRequestDetailPage() {
             <CardContent className="pt-6">
               <h2 className="text-lg font-semibold mb-4">Reference Image</h2>
               <div className="aspect-video w-full overflow-hidden rounded-lg bg-muted">
-                <img
-                  src={request.image_url}
-                  alt="Request reference"
-                  className="h-full w-full object-contain cursor-pointer hover:scale-105 transition-transform"
-                  onClick={() => window.open(request.image_url, '_blank')}
-                />
+                <button
+                  className="flex h-full w-full items-center justify-center"
+                  onClick={() => setFullscreenImage(true)}
+                >
+                  <img
+                    src={request.image_url}
+                    alt="Request reference"
+                    className="h-full w-full object-contain cursor-zoom-in"
+                  />
+                </button>
               </div>
             </CardContent>
           </Card>
@@ -343,6 +348,31 @@ export function AdminCustomRequestDetailPage() {
           )}
         </div>
       </div>
+
+      {/* Fullscreen Image Viewer */}
+      {fullscreenImage && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <div className="flex items-center justify-between p-4">
+            <span className="text-white text-sm">Reference Image</span>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setFullscreenImage(false)}
+              className="text-white hover:bg-white/20"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center relative overflow-hidden">
+            <img
+              src={request.image_url}
+              alt="Request reference"
+              className="max-h-full max-w-full object-contain"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
