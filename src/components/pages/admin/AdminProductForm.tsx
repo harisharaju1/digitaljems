@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/hooks/use-toast";
 import { productService, adminLogService, storageService } from "@/components/lib/sdk";
+import { cn } from "@/components/lib/utils";
 import type { Product, ProductFormData, ProductCategory, MetalType, MetalPurity } from "@/components/types";
 
 const categories: ProductCategory[] = [
