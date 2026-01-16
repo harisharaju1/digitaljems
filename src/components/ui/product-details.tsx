@@ -89,7 +89,7 @@ export function ProductDetails({ product, className }: ProductDetailsProps) {
         </div>
 
         {/* Dimensions Section */}
-        {(product.width_mm || product.height_mm || product.length_mm || product.gross_weight_grams) && (
+        {(product.width_mm !== undefined || product.height_mm !== undefined || product.length_mm !== undefined || product.gross_weight_grams !== undefined) && (
           <div className="rounded-lg bg-purple-50 dark:bg-purple-950/20 p-4 space-y-2">
             <div className="flex items-center gap-2 mb-3">
               <Wrench className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -99,18 +99,18 @@ export function ProductDetails({ product, className }: ProductDetailsProps) {
               <Info className="h-3 w-3 text-muted-foreground" />
             </div>
             <div className="space-y-1 text-sm">
-              {product.width_mm && <p>{product.width_mm} mm (Width)</p>}
-              {product.height_mm && <p>{product.height_mm} mm (Height)</p>}
-              {product.gross_weight_grams && (
+              {product.width_mm !== undefined && <p>{product.width_mm} (Width)</p>}
+              {product.height_mm !== undefined && <p>{product.height_mm} mm (Height)</p>}
+              {product.gross_weight_grams !== undefined && (
                 <p>{product.gross_weight_grams} g (Gross wt)</p>
               )}
-              {product.length_mm && <p>{product.length_mm} mm (Length)</p>}
+              {product.length_mm !== undefined && <p>{product.length_mm} (Length)</p>}
             </div>
           </div>
         )}
 
         {/* DIAMOND Section */}
-        {(product.stone_weight || product.stone_quality || product.stone_setting || product.stone_count) && (
+        {((product.stone_weight && product.stone_weight > 0) || product.stone_quality || product.stone_grade || product.stone_setting || (product.stone_count && product.stone_count > 0)) && (
           <div className="rounded-lg bg-purple-50 dark:bg-purple-950/20 p-4 space-y-2 md:col-span-2">
             <div className="flex items-center gap-2 mb-3">
               <Gem className="h-4 w-4 text-purple-600 dark:text-purple-400" />
@@ -125,7 +125,9 @@ export function ProductDetails({ product, className }: ProductDetailsProps) {
                 <p>{product.stone_weight} ct (Total wt)</p>
               )}
               {product.stone_setting && <p>{product.stone_setting}</p>}
-              {product.stone_count && <p>{product.stone_count} diamond{product.stone_count > 1 ? 's' : ''}</p>}
+              {product.stone_count !== undefined && product.stone_count !== null && (
+                <p>{product.stone_count} diamond{product.stone_count > 1 ? 's' : ''}</p>
+              )}
             </div>
           </div>
         )}

@@ -43,7 +43,7 @@ export function ProductDetailPage() {
   const { isInWishlist, toggleItem } = useWishlistStore();
   const { products, loadProducts, isLoading } = useProductsStore();
   const { isAdmin } = useAuthStore();
-  
+
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -67,12 +67,14 @@ export function ProductDetailPage() {
   const handleShare = async () => {
     if (!product) return;
     const url = window.location.href;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
           title: product.name,
-          text: `Check out this ${product.name} - ₹${product.price.toLocaleString("en-IN")}`,
+          text: `Check out this ${
+            product.name
+          } - ₹${product.price.toLocaleString("en-IN")}`,
           url,
         });
       } catch (err) {
@@ -110,7 +112,8 @@ export function ProductDetailPage() {
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [products.length, loadProducts]);
 
   if (isLoading) {
@@ -175,7 +178,8 @@ export function ProductDetailPage() {
           {/* Left: Images & Videos */}
           <div className="space-y-4">
             {/* Toggle between Images and Videos */}
-            {(product.images.length > 0 || (product.videos && product.videos.length > 0)) && (
+            {(product.images.length > 0 ||
+              (product.videos && product.videos.length > 0)) && (
               <div className="flex gap-2">
                 {product.images.length > 0 && (
                   <Button
@@ -183,7 +187,7 @@ export function ProductDetailPage() {
                     size="sm"
                     onClick={() => setShowVideos(false)}
                   >
-                    Images ({product.images.length})
+                    Images
                   </Button>
                 )}
                 {product.videos && product.videos.length > 0 && (
@@ -192,7 +196,7 @@ export function ProductDetailPage() {
                     size="sm"
                     onClick={() => setShowVideos(true)}
                   >
-                    Videos ({product.videos.length})
+                    Videos
                   </Button>
                 )}
               </div>
@@ -263,7 +267,11 @@ export function ProductDetailPage() {
                         variant="secondary"
                         size="icon"
                         className="absolute left-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
-                        onClick={() => setCurrentVideoIndex(prev => prev === 0 ? product.videos!.length - 1 : prev - 1)}
+                        onClick={() =>
+                          setCurrentVideoIndex((prev) =>
+                            prev === 0 ? product.videos!.length - 1 : prev - 1
+                          )
+                        }
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </Button>
@@ -271,7 +279,11 @@ export function ProductDetailPage() {
                         variant="secondary"
                         size="icon"
                         className="absolute right-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
-                        onClick={() => setCurrentVideoIndex(prev => prev === product.videos!.length - 1 ? 0 : prev + 1)}
+                        onClick={() =>
+                          setCurrentVideoIndex((prev) =>
+                            prev === product.videos!.length - 1 ? 0 : prev + 1
+                          )
+                        }
                       >
                         <ChevronRight className="h-5 w-5" />
                       </Button>
@@ -348,7 +360,9 @@ export function ProductDetailPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                      onClick={() =>
+                        navigate(`/admin/products/${product.id}/edit`)
+                      }
                       title="Edit Product"
                     >
                       <Pencil className="h-5 w-5" />
@@ -360,7 +374,9 @@ export function ProductDetailPage() {
                     className={cn(inWishlist && "text-red-500 border-red-200")}
                     onClick={handleToggleWishlist}
                   >
-                    <Heart className={cn("h-5 w-5", inWishlist && "fill-current")} />
+                    <Heart
+                      className={cn("h-5 w-5", inWishlist && "fill-current")}
+                    />
                   </Button>
                   <Button variant="outline" size="icon" onClick={handleShare}>
                     <Share2 className="h-5 w-5" />
@@ -368,7 +384,9 @@ export function ProductDetailPage() {
                 </div>
               </div>
               <p className="mt-1 text-muted-foreground">
-                <span className="capitalize">{product.metal_type.replace("_", " ")}</span>
+                <span className="capitalize">
+                  {product.metal_type.replace("_", " ")}
+                </span>
                 {" • "}
                 <span className="uppercase">{product.metal_purity}</span>
               </p>
@@ -385,7 +403,9 @@ export function ProductDetailPage() {
                     <span className="text-xl text-muted-foreground line-through">
                       ₹{product.mrp.toLocaleString("en-IN")}
                     </span>
-                    <Badge variant="secondary" className="text-sm">{savingsPercent}% off</Badge>
+                    <Badge variant="secondary" className="text-sm">
+                      {savingsPercent}% off
+                    </Badge>
                   </>
                 )}
               </div>
@@ -404,19 +424,6 @@ export function ProductDetailPage() {
                   </p>
                   <p className="text-sm opacity-80">on making charges</p>
                 </div>
-              </div>
-            </div>
-
-            {/* Certifications */}
-            <div className="flex items-center gap-8 rounded-lg border bg-muted/30 p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-amber-600">BIS</span>
-                <span className="text-sm text-muted-foreground">Hallmark Certified</span>
-              </div>
-              <div className="h-8 w-px bg-border" />
-              <div className="flex items-center gap-2">
-                <span className="text-xl font-bold text-blue-600">IGI</span>
-                <span className="text-sm text-muted-foreground">Certified Diamonds</span>
               </div>
             </div>
 
@@ -457,7 +464,9 @@ export function ProductDetailPage() {
                       variant="outline"
                       size="icon"
                       onClick={() =>
-                        setQuantity(Math.min(product.stock_quantity, quantity + 1))
+                        setQuantity(
+                          Math.min(product.stock_quantity, quantity + 1)
+                        )
                       }
                       disabled={quantity >= product.stock_quantity}
                     >
@@ -468,7 +477,9 @@ export function ProductDetailPage() {
 
                 {quantity > 1 && (
                   <div className="flex items-center justify-between rounded-lg bg-muted p-4">
-                    <span className="font-medium">Total ({quantity} items)</span>
+                    <span className="font-medium">
+                      Total ({quantity} items)
+                    </span>
                     <span className="text-xl font-bold">
                       ₹{totalPrice.toLocaleString("en-IN")}
                     </span>
@@ -496,7 +507,8 @@ export function ProductDetailPage() {
       {/* Mobile Layout */}
       <div className="md:hidden">
         {/* Toggle between Images and Videos */}
-        {(product.images.length > 0 || (product.videos && product.videos.length > 0)) && (
+        {(product.images.length > 0 ||
+          (product.videos && product.videos.length > 0)) && (
           <div className="flex gap-2 px-4 pt-4">
             {product.images.length > 0 && (
               <Button
@@ -504,7 +516,7 @@ export function ProductDetailPage() {
                 size="sm"
                 onClick={() => setShowVideos(false)}
               >
-                Images ({product.images.length})
+                Images
               </Button>
             )}
             {product.videos && product.videos.length > 0 && (
@@ -513,7 +525,7 @@ export function ProductDetailPage() {
                 size="sm"
                 onClick={() => setShowVideos(true)}
               >
-                Videos ({product.videos.length})
+                Videos
               </Button>
             )}
           </div>
@@ -578,7 +590,11 @@ export function ProductDetailPage() {
                     variant="secondary"
                     size="icon"
                     className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10"
-                    onClick={() => setCurrentVideoIndex(prev => prev === 0 ? product.videos!.length - 1 : prev - 1)}
+                    onClick={() =>
+                      setCurrentVideoIndex((prev) =>
+                        prev === 0 ? product.videos!.length - 1 : prev - 1
+                      )
+                    }
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -586,7 +602,11 @@ export function ProductDetailPage() {
                     variant="secondary"
                     size="icon"
                     className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10"
-                    onClick={() => setCurrentVideoIndex(prev => prev === product.videos!.length - 1 ? 0 : prev + 1)}
+                    onClick={() =>
+                      setCurrentVideoIndex((prev) =>
+                        prev === product.videos!.length - 1 ? 0 : prev + 1
+                      )
+                    }
                   >
                     <ChevronRight className="h-5 w-5" />
                   </Button>
@@ -663,7 +683,9 @@ export function ProductDetailPage() {
                     variant="outline"
                     size="icon"
                     className="h-9 w-9"
-                    onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                    onClick={() =>
+                      navigate(`/admin/products/${product.id}/edit`)
+                    }
                     title="Edit Product"
                   >
                     <Pencil className="h-4 w-4" />
@@ -672,18 +694,30 @@ export function ProductDetailPage() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className={cn("h-9 w-9", inWishlist && "text-red-500 border-red-200")}
+                  className={cn(
+                    "h-9 w-9",
+                    inWishlist && "text-red-500 border-red-200"
+                  )}
                   onClick={handleToggleWishlist}
                 >
-                  <Heart className={cn("h-4 w-4", inWishlist && "fill-current")} />
+                  <Heart
+                    className={cn("h-4 w-4", inWishlist && "fill-current")}
+                  />
                 </Button>
-                <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleShare}>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={handleShare}
+                >
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>
             </div>
             <p className="text-sm text-muted-foreground">
-              <span className="capitalize">{product.metal_type.replace("_", " ")}</span>
+              <span className="capitalize">
+                {product.metal_type.replace("_", " ")}
+              </span>
               {" • "}
               <span className="uppercase">{product.metal_purity}</span>
             </p>
@@ -700,7 +734,9 @@ export function ProductDetailPage() {
                   <span className="text-sm text-muted-foreground line-through">
                     ₹{product.mrp.toLocaleString("en-IN")}
                   </span>
-                  <Badge variant="secondary" className="text-xs">{savingsPercent}% off</Badge>
+                  <Badge variant="secondary" className="text-xs">
+                    {savingsPercent}% off
+                  </Badge>
                 </>
               )}
             </div>
@@ -709,24 +745,13 @@ export function ProductDetailPage() {
           {/* Savings */}
           <div className="savings-badge w-full p-3">
             <Sparkles className="h-4 w-4" />
-            <span className="font-medium">Save ₹{savings.toLocaleString("en-IN")} on making charges</span>
+            <span className="font-medium">
+              Save ₹{savings.toLocaleString("en-IN")} on making charges
+            </span>
           </div>
 
           {/* Product Details Component */}
           <ProductDetails product={product} />
-
-          {/* Certifications */}
-          <div className="flex items-center justify-center gap-6 rounded-lg border bg-muted/30 p-4">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-lg font-bold text-amber-600">BIS</span>
-              <span className="text-muted-foreground">Hallmark</span>
-            </div>
-            <div className="h-6 w-px bg-border" />
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-lg font-bold text-blue-600">IGI</span>
-              <span className="text-muted-foreground">Certified</span>
-            </div>
-          </div>
 
           <Separator />
 
@@ -751,12 +776,16 @@ export function ProductDetailPage() {
                 >
                   -
                 </Button>
-                <span className="w-8 text-center font-semibold">{quantity}</span>
+                <span className="w-8 text-center font-semibold">
+                  {quantity}
+                </span>
                 <Button
                   variant="outline"
                   size="icon"
                   className="h-9 w-9"
-                  onClick={() => setQuantity(Math.min(product.stock_quantity, quantity + 1))}
+                  onClick={() =>
+                    setQuantity(Math.min(product.stock_quantity, quantity + 1))
+                  }
                   disabled={quantity >= product.stock_quantity}
                 >
                   +
@@ -768,8 +797,12 @@ export function ProductDetailPage() {
           {/* Total */}
           {quantity > 1 && (
             <div className="flex items-center justify-between rounded-lg bg-muted p-3">
-              <span className="text-sm font-medium">Total ({quantity} items)</span>
-              <span className="text-lg font-bold">₹{totalPrice.toLocaleString("en-IN")}</span>
+              <span className="text-sm font-medium">
+                Total ({quantity} items)
+              </span>
+              <span className="text-lg font-bold">
+                ₹{totalPrice.toLocaleString("en-IN")}
+              </span>
             </div>
           )}
         </div>
@@ -848,7 +881,11 @@ export function ProductDetailPage() {
                       : "border-transparent opacity-50"
                   )}
                 >
-                  <img src={image} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={image}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                 </button>
               ))}
             </div>

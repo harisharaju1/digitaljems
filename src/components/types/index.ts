@@ -26,8 +26,9 @@ export interface Product {
   length_mm?: number; // Length in millimeters
   gross_weight_grams?: number; // Gross weight including stones
   stone_quality?: string; // Stone quality (e.g., "FG-SI")
-  stone_setting?: string; // Stone setting type (e.g., "Hand Setting")
-  stone_count?: number; // Number of stones
+  stone_grade?: string; // Stone grade/clarity (e.g., "FG-SI", "VS", "VVS")
+  stone_setting?: string; // Stone setting type (e.g., "Hand Setting", "Prong Setting", "Bezel Setting")
+  stone_count?: number; // Number of diamonds/stones
   created_at: string;
   updated_at: string;
 }
@@ -200,6 +201,7 @@ export interface ProductFormData {
   length_mm?: number;
   gross_weight_grams?: number;
   stone_quality?: string;
+  stone_grade?: string;
   stone_setting?: string;
   stone_count?: number;
 }

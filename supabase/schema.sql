@@ -28,6 +28,7 @@ CREATE TABLE products (
   length_mm DECIMAL(10,2),
   gross_weight_grams DECIMAL(10,2),
   stone_quality TEXT,
+  stone_grade TEXT,
   stone_setting TEXT,
   stone_count INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -47,6 +48,7 @@ CREATE TABLE products (
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS length_mm DECIMAL(10,2);
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS gross_weight_grams DECIMAL(10,2);
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_quality TEXT;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_grade TEXT;
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_setting TEXT;
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_count INTEGER;
 

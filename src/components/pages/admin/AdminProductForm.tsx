@@ -95,6 +95,7 @@ export function AdminProductForm() {
           length_mm: product.length_mm,
           gross_weight_grams: product.gross_weight_grams,
           stone_quality: product.stone_quality,
+          stone_grade: product.stone_grade,
           stone_setting: product.stone_setting,
           stone_count: product.stone_count,
         });
@@ -768,18 +769,6 @@ export function AdminProductForm() {
                   placeholder="0"
                 />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="stone_count">Stone Count</Label>
-                <Input
-                  id="stone_count"
-                  type="number"
-                  min="0"
-                  value={formData.stone_count ?? ""}
-                  onChange={(e) => setFormData({ ...formData, stone_count: e.target.value === "" ? undefined : parseInt(e.target.value) })}
-                  placeholder="0"
-                />
-              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -794,12 +783,36 @@ export function AdminProductForm() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="stone_setting">Stone Setting</Label>
+                <Label htmlFor="stone_grade">Stone Grade</Label>
+                <Input
+                  id="stone_grade"
+                  value={formData.stone_grade || ""}
+                  onChange={(e) => setFormData({ ...formData, stone_grade: e.target.value })}
+                  placeholder="VS, VVS, SI, etc."
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="stone_setting">Type of Setting</Label>
                 <Input
                   id="stone_setting"
                   value={formData.stone_setting || ""}
                   onChange={(e) => setFormData({ ...formData, stone_setting: e.target.value })}
-                  placeholder="Hand Setting"
+                  placeholder="Hand Setting, Prong Setting, Bezel Setting"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="stone_count">Number of Diamonds</Label>
+                <Input
+                  id="stone_count"
+                  type="number"
+                  min="0"
+                  value={formData.stone_count ?? ""}
+                  onChange={(e) => setFormData({ ...formData, stone_count: e.target.value === "" ? undefined : parseInt(e.target.value) })}
+                  placeholder="0"
                 />
               </div>
             </div>
