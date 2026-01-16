@@ -3,7 +3,7 @@
  * Shows logo, navigation, cart, and auth controls
  */
 
-import { ShoppingCart, User, Search, Menu, X, LayoutDashboard, Store, Heart } from "lucide-react";
+import { ShoppingCart, User, Search, Menu, X, LayoutDashboard, Store, Heart, Home } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/components/store/auth-store";
@@ -38,7 +31,6 @@ export function Header() {
   const { itemCount } = useCartStore();
   const wishlistCount = useWishlistStore((state) => state.items.length);
   const { searchQuery, setSearchQuery } = useProductsStore();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
   const handleLogout = () => {
@@ -71,6 +63,14 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden items-center space-x-6 md:flex">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/")}
+              className="text-sm font-medium"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Home
+            </Button>
             <Link
               to="/"
               className="text-sm font-medium transition-colors hover:text-accent"
@@ -190,7 +190,10 @@ export function Header() {
                     My Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/custom-request")}>
-                    Custom Requests
+                    Submit Custom Request
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/my-custom-requests")}>
+                    My Custom Requests
                   </DropdownMenuItem>
                   {isAdmin && (
                     <>
@@ -229,52 +232,45 @@ export function Header() {
               </Button>
             )}
 
-            {/* Mobile Menu */}
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild className="md:hidden">
+            {/* Mobile Menu - Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="icon">
                   <Menu className="h-5 w-5" />
                 </Button>
-              </SheetTrigger>
-              <SheetContent side="right">
-                <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                <nav className="mt-6 flex flex-col space-y-4">
-                  <Link
-                    to="/"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-sm font-medium"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => navigate("/")}>
+                  <Home className="mr-2 h-4 w-4" />
+                  Home
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/")}>
+                  Shop
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <div className="px-2 py-1.5">
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    Categories
+                  </p>
+                </div>
+                {categories.map((cat) => (
+                  <DropdownMenuItem
+                    key={cat.value}
+                    onClick={() => navigate(`/?category=${cat.value}`)}
                   >
-                    Shop
-                  </Link>
-                  <div className="border-t pt-4">
-                    <p className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
-                      Categories
-                    </p>
-                    {categories.map((cat) => (
-                      <Link
-                        key={cat.value}
-                        to={`/?category=${cat.value}`}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block py-2 text-sm"
-                      >
-                        {cat.label}
-                      </Link>
-                    ))}
-                  </div>
-                  {isAuthenticated && (
-                    <Link
-                      to="/custom-request"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="border-t pt-4 text-sm font-medium"
-                    >
+                    {cat.label}
+                  </DropdownMenuItem>
+                ))}
+                {isAuthenticated && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/custom-request")}>
                       Custom Order
-                    </Link>
-                  )}
-                </nav>
-              </SheetContent>
-            </Sheet>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

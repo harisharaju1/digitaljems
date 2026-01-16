@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from "react";
-import { Loader2, MessageSquare, Send, Image as ImageIcon, Clock, CheckCircle, XCircle, AlertCircle, Phone } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Loader2, MessageSquare, Image as ImageIcon, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,28 +14,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/components/hooks/use-toast";
-import { customRequestService, adminLogService } from "@/components/lib/sdk";
-import type { CustomRequest, CustomRequestStatus } from "@/components/types";
+import { customRequestService } from "@/components/lib/sdk";
+import type { CustomRequest } from "@/components/types";
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800", icon: Clock },
@@ -45,15 +28,9 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 
 export function AdminCustomRequests() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedRequest, setSelectedRequest] = useState<CustomRequest | null>(null);
-  const [isResponding, setIsResponding] = useState(false);
-  
-  // Response form
-  const [responseText, setResponseText] = useState("");
-  const [estimatedPrice, setEstimatedPrice] = useState("");
-  const [newStatus, setNewStatus] = useState<CustomRequestStatus>("reviewed");
 
   useEffect(() => {
     loadRequests();
@@ -75,57 +52,7 @@ export function AdminCustomRequests() {
   };
 
   const handleOpenRequest = (request: CustomRequest) => {
-    setSelectedRequest(request);
-    setResponseText(request.admin_response || "");
-    setEstimatedPrice(request.estimated_price?.toString() || "");
-    setNewStatus(request.status === "pending" ? "reviewed" : request.status);
-  };
-
-  const handleSendResponse = async () => {
-    if (!selectedRequest) return;
-
-    if (!responseText.trim()) {
-      toast({
-        title: "Response required",
-        description: "Please enter a response message",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsResponding(true);
-
-    try {
-      await customRequestService.respondToRequest(
-        selectedRequest.id,
-        responseText,
-        estimatedPrice ? parseFloat(estimatedPrice) : undefined,
-        newStatus
-      );
-
-      await adminLogService.logAction(
-        "request_responded",
-        "request",
-        selectedRequest.id,
-        { status: newStatus, hasPrice: !!estimatedPrice }
-      );
-
-      toast({
-        title: "Response sent",
-        description: "Your response has been sent to the customer.",
-      });
-
-      setSelectedRequest(null);
-      loadRequests();
-    } catch (error) {
-      toast({
-        title: "Failed to send response",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsResponding(false);
-    }
+    navigate(`/admin/custom-requests/${request.id}`);
   };
 
   const formatDate = (dateString: string) => {
@@ -257,141 +184,6 @@ export function AdminCustomRequests() {
         </div>
       )}
 
-      {/* Request Detail Dialog */}
-      <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Custom Request Details</DialogTitle>
-            <DialogDescription>
-              Review the request and send a response to the customer
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedRequest && (
-            <div className="space-y-6">
-              {/* Customer Info */}
-              <div>
-                <p className="text-sm text-muted-foreground">Customer</p>
-                {selectedRequest.customer_name && (
-                  <p className="font-medium">{selectedRequest.customer_name}</p>
-                )}
-                <p className="font-medium">{selectedRequest.customer_email}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <a 
-                    href={`tel:${selectedRequest.customer_phone}`}
-                    className="text-sm text-primary hover:underline"
-                  >
-                    {selectedRequest.customer_phone}
-                  </a>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(`https://wa.me/${selectedRequest.customer_phone.replace(/[^0-9]/g, '')}`, '_blank')}
-                  >
-                    WhatsApp
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Submitted {formatDate(selectedRequest.created_at)}
-                </p>
-              </div>
-
-              {/* Image */}
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Reference Image</p>
-                <div className="aspect-video max-w-md overflow-hidden rounded-lg bg-muted">
-                  <img
-                    src={selectedRequest.image_url}
-                    alt="Request reference"
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Customer's Description</p>
-                <div className="rounded-lg border bg-muted/50 p-4">
-                  <p className="text-sm whitespace-pre-wrap">{selectedRequest.description}</p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Response Form */}
-              <div className="space-y-4">
-                <h3 className="font-semibold">Your Response</h3>
-
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select value={newStatus} onValueChange={(v) => setNewStatus(v as CustomRequestStatus)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="reviewed">Under Review</SelectItem>
-                      <SelectItem value="quoted">Send Quote</SelectItem>
-                      <SelectItem value="declined">Decline Request</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {newStatus === "quoted" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Estimated Price (₹)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      placeholder="Enter estimated price"
-                      value={estimatedPrice}
-                      onChange={(e) => setEstimatedPrice(e.target.value)}
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="response">Response Message</Label>
-                  <Textarea
-                    id="response"
-                    placeholder="Write your response to the customer..."
-                    value={responseText}
-                    onChange={(e) => setResponseText(e.target.value)}
-                    rows={4}
-                  />
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedRequest(null)}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSendResponse}
-                    disabled={isResponding}
-                    className="flex-1"
-                  >
-                    {isResponding ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending...
-                      </>
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Send Response
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

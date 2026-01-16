@@ -283,6 +283,47 @@ export const storageService = {
 
     if (error) console.error('Failed to delete image:', error);
   },
+
+  /**
+   * Upload a product video to Supabase Storage
+   */
+  async uploadProductVideo(file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+    const filePath = `products/videos/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from('product-images')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    // Get public URL
+    const { data } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  },
+
+  /**
+   * Delete a product video from Supabase Storage
+   */
+  async deleteProductVideo(url: string): Promise<void> {
+    // Extract path from URL
+    const match = url.match(/product-images\/(.+)$/);
+    if (!match) return;
+
+    const filePath = match[1];
+    const { error } = await supabase.storage
+      .from('product-images')
+      .remove([filePath]);
+
+    if (error) console.error('Failed to delete video:', error);
+  },
 };
 
 // ============= Product Service =============
@@ -304,6 +345,8 @@ export const productService = {
       ...item,
       images:
         typeof item.images === "string" ? JSON.parse(item.images) : item.images,
+      videos:
+        typeof item.videos === "string" ? JSON.parse(item.videos) : (item.videos || []),
     })) as Product[];
   },
 
@@ -327,6 +370,8 @@ export const productService = {
       ...item,
       images:
         typeof item.images === "string" ? JSON.parse(item.images) : item.images,
+      videos:
+        typeof item.videos === "string" ? JSON.parse(item.videos) : (item.videos || []),
     })) as Product[];
   },
 
@@ -346,6 +391,8 @@ export const productService = {
       ...data,
       images:
         typeof data.images === "string" ? JSON.parse(data.images) : data.images,
+      videos:
+        typeof data.videos === "string" ? JSON.parse(data.videos) : (data.videos || []),
     } as Product;
   },
 
@@ -357,6 +404,7 @@ export const productService = {
     const product = {
       ...productData,
       images: JSON.stringify(productData.images),
+      videos: JSON.stringify(productData.videos || []),
       created_at: now,
       updated_at: now,
     };
@@ -389,6 +437,9 @@ export const productService = {
 
     if (updates.images) {
       updateData.images = JSON.stringify(updates.images);
+    }
+    if (updates.videos !== undefined) {
+      updateData.videos = JSON.stringify(updates.videos);
     }
 
     const { error } = await supabase

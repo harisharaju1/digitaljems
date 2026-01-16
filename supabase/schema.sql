@@ -18,14 +18,37 @@ CREATE TABLE products (
   mrp DECIMAL(12,2) NOT NULL,
   making_charges_saved DECIMAL(12,2) NOT NULL DEFAULT 0,
   images JSONB DEFAULT '[]',
+  videos JSONB DEFAULT '[]',
   stock_quantity INTEGER NOT NULL DEFAULT 0,
   is_active TEXT NOT NULL DEFAULT 'active' CHECK (is_active IN ('active', 'inactive')),
+  sku TEXT,
+  short_description TEXT,
+  width_mm DECIMAL(10,2),
+  height_mm DECIMAL(10,2),
+  length_mm DECIMAL(10,2),
+  gross_weight_grams DECIMAL(10,2),
+  stone_quality TEXT,
+  stone_setting TEXT,
+  stone_count INTEGER,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Run this if you already have the table and need to add the column:
 -- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_weight DECIMAL(10,2);
+
+-- Migration: Add video support and product details fields
+-- Run these if you already have the table:
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS videos JSONB DEFAULT '[]';
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS sku TEXT;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS short_description TEXT;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS width_mm DECIMAL(10,2);
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS height_mm DECIMAL(10,2);
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS length_mm DECIMAL(10,2);
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS gross_weight_grams DECIMAL(10,2);
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_quality TEXT;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_setting TEXT;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS stone_count INTEGER;
 
 -- Orders Table
 CREATE TABLE orders (

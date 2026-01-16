@@ -31,6 +31,7 @@ import { useProductsStore } from "@/components/store/products-store";
 import { useToast } from "@/components/hooks/use-toast";
 import { cn } from "@/components/lib/utils";
 import { ProductImage } from "@/components/ui/product-image";
+import { ProductDetails } from "@/components/ui/product-details";
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -41,8 +42,10 @@ export function ProductDetailPage() {
   const { products, loadProducts, isLoading } = useProductsStore();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [fullscreenImage, setFullscreenImage] = useState(false);
+  const [showVideos, setShowVideos] = useState(false);
 
   const product = products.find((p) => p.id === id);
   const inWishlist = product ? isInWishlist(product.id) : false;
@@ -166,59 +169,124 @@ export function ProductDetailPage() {
       {/* Desktop Layout */}
       <div className="hidden md:block container mx-auto px-4 pb-12">
         <div className="grid grid-cols-[1.2fr_1fr] gap-8 lg:gap-12">
-          {/* Left: Images */}
+          {/* Left: Images & Videos */}
           <div className="space-y-4">
-            {/* Main Image */}
-            <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
-              <button
-                className="flex h-full w-full items-center justify-center"
-                onClick={() => setFullscreenImage(true)}
-              >
-                <ProductImage
-                  src={product.images[currentImageIndex]}
-                  alt={`${product.name} - Image ${currentImageIndex + 1}`}
-                  className="max-h-full max-w-full object-contain cursor-zoom-in"
-                />
-              </button>
-
-              {/* Navigation Arrows */}
-              {product.images.length > 1 && (
-                <>
+            {/* Toggle between Images and Videos */}
+            {(product.images.length > 0 || (product.videos && product.videos.length > 0)) && (
+              <div className="flex gap-2">
+                {product.images.length > 0 && (
                   <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute left-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
-                    onClick={handlePrevImage}
+                    variant={!showVideos ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowVideos(false)}
                   >
-                    <ChevronLeft className="h-5 w-5" />
+                    Images ({product.images.length})
                   </Button>
+                )}
+                {product.videos && product.videos.length > 0 && (
                   <Button
-                    variant="secondary"
-                    size="icon"
-                    className="absolute right-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
-                    onClick={handleNextImage}
+                    variant={showVideos ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setShowVideos(true)}
                   >
-                    <ChevronRight className="h-5 w-5" />
+                    Videos ({product.videos.length})
                   </Button>
-                </>
-              )}
-
-              {/* Image Counter */}
-              {product.images.length > 1 && (
-                <div className="absolute left-4 top-4 rounded-lg bg-black/60 px-3 py-1 text-sm text-white backdrop-blur">
-                  {currentImageIndex + 1} / {product.images.length}
-                </div>
-              )}
-
-              {/* Zoom hint */}
-              <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-black/60 px-3 py-2 text-sm text-white backdrop-blur">
-                <ZoomIn className="h-4 w-4" />
-                <span>Click to zoom</span>
+                )}
               </div>
+            )}
+
+            {/* Main Image/Video */}
+            <div className="relative aspect-square overflow-hidden rounded-xl bg-muted">
+              {!showVideos && product.images.length > 0 ? (
+                <>
+                  <button
+                    className="flex h-full w-full items-center justify-center"
+                    onClick={() => setFullscreenImage(true)}
+                  >
+                    <ProductImage
+                      src={product.images[currentImageIndex]}
+                      alt={`${product.name} - Image ${currentImageIndex + 1}`}
+                      className="max-h-full max-w-full object-contain cursor-zoom-in"
+                    />
+                  </button>
+
+                  {/* Navigation Arrows */}
+                  {product.images.length > 1 && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
+                        onClick={handlePrevImage}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
+                        onClick={handleNextImage}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </>
+                  )}
+
+                  {/* Image Counter */}
+                  {product.images.length > 1 && (
+                    <div className="absolute left-4 top-4 rounded-lg bg-black/60 px-3 py-1 text-sm text-white backdrop-blur">
+                      {currentImageIndex + 1} / {product.images.length}
+                    </div>
+                  )}
+
+                  {/* Zoom hint */}
+                  <div className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-black/60 px-3 py-2 text-sm text-white backdrop-blur">
+                    <ZoomIn className="h-4 w-4" />
+                    <span>Click to zoom</span>
+                  </div>
+                </>
+              ) : product.videos && product.videos.length > 0 ? (
+                <>
+                  <video
+                    src={product.videos[currentVideoIndex]}
+                    controls
+                    className="w-full h-full object-contain"
+                  />
+
+                  {/* Navigation Arrows */}
+                  {product.videos.length > 1 && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
+                        onClick={() => setCurrentVideoIndex(prev => prev === 0 ? product.videos!.length - 1 : prev - 1)}
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="icon"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 opacity-70 hover:opacity-100"
+                        onClick={() => setCurrentVideoIndex(prev => prev === product.videos!.length - 1 ? 0 : prev + 1)}
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </Button>
+                    </>
+                  )}
+
+                  {/* Video Counter */}
+                  {product.videos.length > 1 && (
+                    <div className="absolute left-4 top-4 rounded-lg bg-black/60 px-3 py-1 text-sm text-white backdrop-blur">
+                      {currentVideoIndex + 1} / {product.videos.length}
+                    </div>
+                  )}
+                </>
+              ) : null}
             </div>
 
             {/* Thumbnails */}
-            {product.images.length > 1 && (
+            {!showVideos && product.images.length > 1 && (
               <div className="flex gap-3 overflow-x-auto pb-2">
                 {product.images.map((image, index) => (
                   <button
@@ -235,6 +303,30 @@ export function ProductDetailPage() {
                       src={image}
                       alt={`Thumbnail ${index + 1}`}
                       className="h-full w-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Video Thumbnails */}
+            {showVideos && product.videos && product.videos.length > 1 && (
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {product.videos.map((video, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentVideoIndex(index)}
+                    className={cn(
+                      "h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all",
+                      currentVideoIndex === index
+                        ? "border-primary shadow-md"
+                        : "border-transparent opacity-60 hover:opacity-100"
+                    )}
+                  >
+                    <video
+                      src={video}
+                      className="h-full w-full object-cover"
+                      muted
                     />
                   </button>
                 ))}
@@ -317,34 +409,8 @@ export function ProductDetailPage() {
 
             <Separator />
 
-            {/* Product Details */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Product Details</h3>
-              <div className={cn("grid gap-4", product.stone_weight ? "grid-cols-4" : "grid-cols-3")}>
-                <div className="rounded-lg bg-muted p-4 text-center">
-                  <Scale className="mx-auto h-5 w-5 text-muted-foreground mb-2" />
-                  <p className="font-semibold">{product.weight_grams}g</p>
-                  <p className="text-sm text-muted-foreground">Weight</p>
-                </div>
-                {product.stone_weight && (
-                  <div className="rounded-lg bg-muted p-4 text-center">
-                    <Gem className="mx-auto h-5 w-5 text-muted-foreground mb-2" />
-                    <p className="font-semibold">{product.stone_weight}ct</p>
-                    <p className="text-sm text-muted-foreground">Stone</p>
-                  </div>
-                )}
-                <div className="rounded-lg bg-muted p-4 text-center">
-                  <Ruler className="mx-auto h-5 w-5 text-muted-foreground mb-2" />
-                  <p className="font-semibold uppercase">{product.metal_purity}</p>
-                  <p className="text-sm text-muted-foreground">Purity</p>
-                </div>
-                <div className="rounded-lg bg-muted p-4 text-center">
-                  <Package className="mx-auto h-5 w-5 text-muted-foreground mb-2" />
-                  <p className="font-semibold">{product.stock_quantity}</p>
-                  <p className="text-sm text-muted-foreground">In Stock</p>
-                </div>
-              </div>
-            </div>
+            {/* Product Details Component */}
+            <ProductDetails product={product} />
 
             <Separator />
 
@@ -416,51 +482,116 @@ export function ProductDetailPage() {
 
       {/* Mobile Layout */}
       <div className="md:hidden">
-        {/* Image Gallery */}
+        {/* Toggle between Images and Videos */}
+        {(product.images.length > 0 || (product.videos && product.videos.length > 0)) && (
+          <div className="flex gap-2 px-4 pt-4">
+            {product.images.length > 0 && (
+              <Button
+                variant={!showVideos ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowVideos(false)}
+              >
+                Images ({product.images.length})
+              </Button>
+            )}
+            {product.videos && product.videos.length > 0 && (
+              <Button
+                variant={showVideos ? "default" : "outline"}
+                size="sm"
+                onClick={() => setShowVideos(true)}
+              >
+                Videos ({product.videos.length})
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Image/Video Gallery */}
         <div className="relative aspect-square bg-muted">
-          <button
-            className="flex h-full w-full items-center justify-center p-4"
-            onClick={() => setFullscreenImage(true)}
-          >
-            <ProductImage
-              src={product.images[currentImageIndex]}
-              alt={`${product.name} - Image ${currentImageIndex + 1}`}
-              className="max-h-full max-w-full object-contain"
-            />
-          </button>
-
-          {/* Navigation Arrows */}
-          {product.images.length > 1 && (
+          {!showVideos && product.images.length > 0 ? (
             <>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10"
-                onClick={handlePrevImage}
+              <button
+                className="flex h-full w-full items-center justify-center p-4"
+                onClick={() => setFullscreenImage(true)}
               >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              <Button
-                variant="secondary"
-                size="icon"
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10"
-                onClick={handleNextImage}
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-            </>
-          )}
+                <ProductImage
+                  src={product.images[currentImageIndex]}
+                  alt={`${product.name} - Image ${currentImageIndex + 1}`}
+                  className="max-h-full max-w-full object-contain"
+                />
+              </button>
 
-          {/* Image Counter */}
-          {product.images.length > 1 && (
-            <div className="absolute left-2 top-2 rounded bg-black/60 px-2 py-1 text-xs text-white">
-              {currentImageIndex + 1} / {product.images.length}
-            </div>
-          )}
+              {/* Navigation Arrows */}
+              {product.images.length > 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10"
+                    onClick={handlePrevImage}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10"
+                    onClick={handleNextImage}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+
+              {/* Image Counter */}
+              {product.images.length > 1 && (
+                <div className="absolute left-2 top-2 rounded bg-black/60 px-2 py-1 text-xs text-white">
+                  {currentImageIndex + 1} / {product.images.length}
+                </div>
+              )}
+            </>
+          ) : product.videos && product.videos.length > 0 ? (
+            <>
+              <video
+                src={product.videos[currentVideoIndex]}
+                controls
+                className="w-full h-full object-contain"
+              />
+
+              {/* Navigation Arrows */}
+              {product.videos.length > 1 && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10"
+                    onClick={() => setCurrentVideoIndex(prev => prev === 0 ? product.videos!.length - 1 : prev - 1)}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10"
+                    onClick={() => setCurrentVideoIndex(prev => prev === product.videos!.length - 1 ? 0 : prev + 1)}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+
+              {/* Video Counter */}
+              {product.videos.length > 1 && (
+                <div className="absolute left-2 top-2 rounded bg-black/60 px-2 py-1 text-xs text-white">
+                  {currentVideoIndex + 1} / {product.videos.length}
+                </div>
+              )}
+            </>
+          ) : null}
         </div>
 
         {/* Thumbnails */}
-        {product.images.length > 1 && (
+        {!showVideos && product.images.length > 1 && (
           <div className="flex gap-2 overflow-x-auto bg-background px-4 py-3 scrollbar-hide">
             {product.images.map((image, index) => (
               <button
@@ -477,6 +608,30 @@ export function ProductDetailPage() {
                   src={image}
                   alt={`Thumbnail ${index + 1}`}
                   className="h-full w-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Video Thumbnails */}
+        {showVideos && product.videos && product.videos.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto bg-background px-4 py-3 scrollbar-hide">
+            {product.videos.map((video, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentVideoIndex(index)}
+                className={cn(
+                  "h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg border-2",
+                  currentVideoIndex === index
+                    ? "border-primary"
+                    : "border-transparent opacity-60"
+                )}
+              >
+                <video
+                  src={video}
+                  className="h-full w-full object-cover"
+                  muted
                 />
               </button>
             ))}
@@ -533,31 +688,8 @@ export function ProductDetailPage() {
             <span className="font-medium">Save ₹{savings.toLocaleString("en-IN")} on making charges</span>
           </div>
 
-          {/* Details Grid */}
-          <div className={cn("grid gap-2 text-center text-sm", product.stone_weight ? "grid-cols-4" : "grid-cols-3")}>
-            <div className="rounded-lg bg-muted p-3">
-              <Scale className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
-              <p className="font-medium">{product.weight_grams}g</p>
-              <p className="text-xs text-muted-foreground">Weight</p>
-            </div>
-            {product.stone_weight && (
-              <div className="rounded-lg bg-muted p-3">
-                <Gem className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
-                <p className="font-medium">{product.stone_weight}ct</p>
-                <p className="text-xs text-muted-foreground">Stone</p>
-              </div>
-            )}
-            <div className="rounded-lg bg-muted p-3">
-              <Ruler className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
-              <p className="font-medium uppercase">{product.metal_purity}</p>
-              <p className="text-xs text-muted-foreground">Purity</p>
-            </div>
-            <div className="rounded-lg bg-muted p-3">
-              <Package className="mx-auto h-4 w-4 text-muted-foreground mb-1" />
-              <p className="font-medium">{product.stock_quantity}</p>
-              <p className="text-xs text-muted-foreground">In Stock</p>
-            </div>
-          </div>
+          {/* Product Details Component */}
+          <ProductDetails product={product} />
 
           {/* Certifications */}
           <div className="flex items-center justify-center gap-6 rounded-lg border bg-muted/30 p-4">

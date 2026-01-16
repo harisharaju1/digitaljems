@@ -54,9 +54,12 @@ export function AdminProductForm() {
   const [isLoading, setIsLoading] = useState(isEditing);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [formData, setFormData] = useState<ProductFormData>(emptyForm);
   const [imageUrls, setImageUrls] = useState("");
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [videoUrls, setVideoUrls] = useState("");
+  const [uploadedVideos, setUploadedVideos] = useState<string[]>([]);
 
   useEffect(() => {
     if (isEditing && id) {
@@ -81,11 +84,23 @@ export function AdminProductForm() {
           mrp: product.mrp,
           making_charges_saved: product.making_charges_saved,
           images: product.images,
+          videos: product.videos || [],
           stock_quantity: product.stock_quantity,
           is_active: product.is_active,
+          sku: product.sku,
+          short_description: product.short_description,
+          width_mm: product.width_mm,
+          height_mm: product.height_mm,
+          length_mm: product.length_mm,
+          gross_weight_grams: product.gross_weight_grams,
+          stone_quality: product.stone_quality,
+          stone_setting: product.stone_setting,
+          stone_count: product.stone_count,
         });
         setImageUrls(product.images.join("\n"));
         setUploadedImages(product.images);
+        setVideoUrls((product.videos || []).join("\n"));
+        setUploadedVideos(product.videos || []);
       } else {
         toast({ title: "Product not found", variant: "destructive" });
         navigate("/admin/products");
@@ -101,6 +116,21 @@ export function AdminProductForm() {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+
+    // Check if adding these files would exceed the limit
+    const currentCount = uploadedImages.length;
+    const newFilesCount = files.length;
+    const maxImages = 10;
+
+    if (currentCount + newFilesCount > maxImages) {
+      toast({
+        title: "Image limit exceeded",
+        description: `Maximum ${maxImages} images allowed. You have ${currentCount} and tried to add ${newFilesCount}.`,
+        variant: "destructive",
+      });
+      e.target.value = '';
+      return;
+    }
 
     setIsUploading(true);
     const newUrls: string[] = [];
@@ -153,6 +183,115 @@ export function AdminProductForm() {
     );
   };
 
+  const checkVideoDuration = (file: File): Promise<number> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+      
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(video.duration);
+      };
+      
+      video.onerror = () => {
+        window.URL.revokeObjectURL(video.src);
+        reject(new Error('Failed to load video metadata'));
+      };
+      
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Check if adding these files would exceed the limit
+    const currentCount = uploadedVideos.length;
+    const newFilesCount = files.length;
+    const maxVideos = 10;
+
+    if (currentCount + newFilesCount > maxVideos) {
+      toast({
+        title: "Video limit exceeded",
+        description: `Maximum ${maxVideos} videos allowed. You have ${currentCount} and tried to add ${newFilesCount}.`,
+        variant: "destructive",
+      });
+      e.target.value = '';
+      return;
+    }
+
+    setIsUploadingVideo(true);
+    const newUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        if (!file.type.startsWith('video/')) {
+          toast({
+            title: "Invalid file",
+            description: `${file.name} is not a video`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        if (file.size > 50 * 1024 * 1024) {
+          toast({
+            title: "File too large",
+            description: `${file.name} exceeds 50MB limit`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        // Check video duration (max 10 seconds)
+        try {
+          const duration = await checkVideoDuration(file);
+          if (duration > 10) {
+            toast({
+              title: "Video too long",
+              description: `${file.name} is ${duration.toFixed(1)}s. Maximum duration is 10 seconds.`,
+              variant: "destructive",
+            });
+            continue;
+          }
+        } catch (error) {
+          toast({
+            title: "Video validation failed",
+            description: `Could not validate ${file.name}. Please try another file.`,
+            variant: "destructive",
+          });
+          continue;
+        }
+
+        const url = await storageService.uploadProductVideo(file);
+        newUrls.push(url);
+      }
+
+      if (newUrls.length > 0) {
+        setUploadedVideos(prev => [...prev, ...newUrls]);
+        setVideoUrls(prev => prev ? `${prev}\n${newUrls.join('\n')}` : newUrls.join('\n'));
+        toast({ title: `${newUrls.length} video(s) uploaded` });
+      }
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploadingVideo(false);
+      e.target.value = '';
+    }
+  };
+
+  const removeUploadedVideo = (urlToRemove: string) => {
+    setUploadedVideos(prev => prev.filter(url => url !== urlToRemove));
+    setVideoUrls(prev => 
+      prev.split('\n').filter(url => url.trim() !== urlToRemove).join('\n')
+    );
+  };
+
   const handleSave = async () => {
     if (!formData.name || !formData.price) {
       toast({
@@ -171,9 +310,36 @@ export function AdminProductForm() {
         .map((url) => url.trim())
         .filter((url) => url);
 
+      const videos = videoUrls
+        .split("\n")
+        .map((url) => url.trim())
+        .filter((url) => url);
+
+      // Validate limits
+      if (images.length > 10) {
+        toast({
+          title: "Validation error",
+          description: `Maximum 10 images allowed. You have ${images.length}.`,
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      if (videos.length > 10) {
+        toast({
+          title: "Validation error",
+          description: `Maximum 10 videos allowed. You have ${videos.length}.`,
+          variant: "destructive",
+        });
+        setIsSaving(false);
+        return;
+      }
+
       const dataToSave = {
         ...formData,
         images,
+        videos,
         making_charges_saved: formData.mrp - formData.price,
       };
 
@@ -377,7 +543,12 @@ export function AdminProductForm() {
 
           {/* Images */}
           <div className="space-y-2">
-            <Label>Product Images</Label>
+            <div className="flex items-center justify-between">
+              <Label>Product Images</Label>
+              <span className="text-xs text-muted-foreground">
+                {uploadedImages.length} / 10
+              </span>
+            </div>
             
             <div className="flex flex-wrap gap-2 mb-2">
               {uploadedImages.map((url, index) => (
@@ -393,33 +564,244 @@ export function AdminProductForm() {
                 </div>
               ))}
               
-              <label className="h-20 w-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex items-center justify-center cursor-pointer hover:border-muted-foreground/50 transition-colors">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={handleImageUpload}
-                  className="hidden"
-                  disabled={isUploading}
-                />
-                {isUploading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                ) : (
-                  <Upload className="h-5 w-5 text-muted-foreground" />
-                )}
-              </label>
+              {uploadedImages.length < 10 && (
+                <label className={cn(
+                  "h-20 w-20 rounded-lg border-2 border-dashed flex items-center justify-center transition-colors",
+                  isUploading
+                    ? "border-muted-foreground/30 cursor-not-allowed opacity-50"
+                    : "border-muted-foreground/30 cursor-pointer hover:border-muted-foreground/50"
+                )}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={isUploading || uploadedImages.length >= 10}
+                  />
+                  {isUploading ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </label>
+              )}
             </div>
             
             <p className="text-xs text-muted-foreground mb-2">
-              Click + to upload images (max 5MB each) or add URLs below
+              Click + to upload images (max 10 images, 5MB each) or add URLs below
             </p>
             
             <Textarea
               value={imageUrls}
-              onChange={(e) => setImageUrls(e.target.value)}
+              onChange={(e) => {
+                setImageUrls(e.target.value);
+                const urls = e.target.value.split("\n").map((url) => url.trim()).filter((url) => url);
+                setUploadedImages(urls);
+              }}
+              onBlur={(e) => {
+                const urls = e.target.value.split("\n").map((url) => url.trim()).filter((url) => url);
+                if (urls.length > 10) {
+                  toast({
+                    title: "Image limit exceeded",
+                    description: "Maximum 10 images allowed. Please remove some URLs.",
+                    variant: "destructive",
+                  });
+                }
+              }}
               placeholder="https://example.com/image1.jpg"
               rows={2}
             />
+          </div>
+
+          {/* Videos */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label>Product Videos</Label>
+              <span className="text-xs text-muted-foreground">
+                {uploadedVideos.length} / 10
+              </span>
+            </div>
+            
+            <div className="flex flex-wrap gap-2 mb-2">
+              {uploadedVideos.map((url, index) => (
+                <div key={index} className="relative h-20 w-20 rounded-lg overflow-hidden border bg-muted">
+                  <video src={url} className="h-full w-full object-cover" muted />
+                  <button
+                    type="button"
+                    onClick={() => removeUploadedVideo(url)}
+                    className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
+              ))}
+              
+              {uploadedVideos.length < 10 && (
+                <label className={cn(
+                  "h-20 w-20 rounded-lg border-2 border-dashed flex items-center justify-center transition-colors",
+                  isUploadingVideo
+                    ? "border-muted-foreground/30 cursor-not-allowed opacity-50"
+                    : "border-muted-foreground/30 cursor-pointer hover:border-muted-foreground/50"
+                )}>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    multiple
+                    onChange={handleVideoUpload}
+                    className="hidden"
+                    disabled={isUploadingVideo || uploadedVideos.length >= 10}
+                  />
+                  {isUploadingVideo ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </label>
+              )}
+            </div>
+            
+            <p className="text-xs text-muted-foreground mb-2">
+              Click + to upload videos (max 10 videos, 10 seconds each, 50MB each) or add URLs below
+            </p>
+            
+            <Textarea
+              value={videoUrls}
+              onChange={(e) => {
+                setVideoUrls(e.target.value);
+                const urls = e.target.value.split("\n").map((url) => url.trim()).filter((url) => url);
+                setUploadedVideos(urls);
+              }}
+              onBlur={(e) => {
+                const urls = e.target.value.split("\n").map((url) => url.trim()).filter((url) => url);
+                if (urls.length > 10) {
+                  toast({
+                    title: "Video limit exceeded",
+                    description: "Maximum 10 videos allowed. Please remove some URLs.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+              placeholder="https://example.com/video1.mp4"
+              rows={2}
+            />
+          </div>
+
+          {/* Product Details Fields */}
+          <div className="space-y-4 border-t pt-4">
+            <h3 className="font-semibold">Additional Product Details</h3>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="sku">SKU</Label>
+                <Input
+                  id="sku"
+                  value={formData.sku || ""}
+                  onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                  placeholder="JR07863-1YS300"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="short_description">Short Description</Label>
+                <Input
+                  id="short_description"
+                  value={formData.short_description || ""}
+                  onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
+                  placeholder="Brief product summary"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="width_mm">Width (mm)</Label>
+                <Input
+                  id="width_mm"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={formData.width_mm ?? ""}
+                  onChange={(e) => setFormData({ ...formData, width_mm: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="height_mm">Height (mm)</Label>
+                <Input
+                  id="height_mm"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={formData.height_mm ?? ""}
+                  onChange={(e) => setFormData({ ...formData, height_mm: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="length_mm">Length (mm)</Label>
+                <Input
+                  id="length_mm"
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  value={formData.length_mm ?? ""}
+                  onChange={(e) => setFormData({ ...formData, length_mm: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="gross_weight_grams">Gross Weight (g)</Label>
+                <Input
+                  id="gross_weight_grams"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.gross_weight_grams ?? ""}
+                  onChange={(e) => setFormData({ ...formData, gross_weight_grams: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                  placeholder="0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="stone_count">Stone Count</Label>
+                <Input
+                  id="stone_count"
+                  type="number"
+                  min="0"
+                  value={formData.stone_count ?? ""}
+                  onChange={(e) => setFormData({ ...formData, stone_count: e.target.value === "" ? undefined : parseInt(e.target.value) })}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="stone_quality">Stone Quality</Label>
+                <Input
+                  id="stone_quality"
+                  value={formData.stone_quality || ""}
+                  onChange={(e) => setFormData({ ...formData, stone_quality: e.target.value })}
+                  placeholder="FG-SI"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="stone_setting">Stone Setting</Label>
+                <Input
+                  id="stone_setting"
+                  value={formData.stone_setting || ""}
+                  onChange={(e) => setFormData({ ...formData, stone_setting: e.target.value })}
+                  placeholder="Hand Setting"
+                />
+              </div>
+            </div>
           </div>
 
           {/* Status */}

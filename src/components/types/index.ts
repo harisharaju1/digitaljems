@@ -16,8 +16,18 @@ export interface Product {
   mrp: number;
   making_charges_saved: number;
   images: string[]; // Array of image URLs
+  videos?: string[]; // Array of video URLs
   stock_quantity: number;
   is_active: "active" | "inactive";
+  sku?: string; // Stock Keeping Unit
+  short_description?: string; // Short product description
+  width_mm?: number; // Width in millimeters
+  height_mm?: number; // Height in millimeters
+  length_mm?: number; // Length in millimeters
+  gross_weight_grams?: number; // Gross weight including stones
+  stone_quality?: string; // Stone quality (e.g., "FG-SI")
+  stone_setting?: string; // Stone setting type (e.g., "Hand Setting")
+  stone_count?: number; // Number of stones
   created_at: string;
   updated_at: string;
 }
@@ -180,8 +190,18 @@ export interface ProductFormData {
   mrp: number;
   making_charges_saved: number;
   images: string[];
+  videos?: string[];
   stock_quantity: number;
   is_active: "active" | "inactive";
+  sku?: string;
+  short_description?: string;
+  width_mm?: number;
+  height_mm?: number;
+  length_mm?: number;
+  gross_weight_grams?: number;
+  stone_quality?: string;
+  stone_setting?: string;
+  stone_count?: number;
 }
 
 // ============= Filter Types =============

@@ -13,6 +13,7 @@ import { LoginPage } from "@/components/pages/LoginPage";
 import { ProfilePage } from "@/components/pages/ProfilePage";
 import { OrderHistoryPage } from "@/components/pages/OrderHistoryPage";
 import { CustomRequestPage } from "@/components/pages/CustomRequestPage";
+import { MyCustomRequestsPage } from "@/components/pages/MyCustomRequestsPage";
 import { WishlistPage } from "@/components/pages/WishlistPage";
 import { ProductDetailPage } from "@/components/pages/ProductDetailPage";
 import { AdminLayout } from "@/components/pages/admin/AdminLayout";
@@ -23,6 +24,7 @@ import { AdminOrders } from "@/components/pages/admin/AdminOrders";
 import { AdminOrderDetail } from "@/components/pages/admin/AdminOrderDetail";
 import { AdminOrderUpdate } from "@/components/pages/admin/AdminOrderUpdate";
 import { AdminCustomRequests } from "@/components/pages/admin/AdminCustomRequests";
+import { AdminCustomRequestDetailPage } from "@/components/pages/admin/AdminCustomRequestDetailPage";
 import NotFoundPage from "@/components/pages/NotFoundPage";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { supabase } from "@/components/lib/supabase";
@@ -129,6 +131,7 @@ function App() {
             <Route path="orders/:id" element={<AdminOrderDetail />} />
             <Route path="orders/:id/update" element={<AdminOrderUpdate />} />
             <Route path="custom-requests" element={<AdminCustomRequests />} />
+            <Route path="custom-requests/:id" element={<AdminCustomRequestDetailPage />} />
           </Route>
 
           {/* Customer Routes - With Header & Footer */}
@@ -151,6 +154,7 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/orders" element={<OrderHistoryPage />} />
                     <Route path="/custom-request" element={<CustomRequestPage />} />
+                    <Route path="/my-custom-requests" element={<MyCustomRequestsPage />} />
                     <Route path="/wishlist" element={<WishlistPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
