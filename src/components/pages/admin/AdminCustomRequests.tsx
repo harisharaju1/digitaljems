@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/hooks/use-toast";
+import { cn } from "@/components/lib/utils";
 import { customRequestService } from "@/components/lib/sdk";
 import type { CustomRequest } from "@/components/types";
 
@@ -160,9 +161,8 @@ export function AdminCustomRequests() {
                             {formatDate(request.created_at)}
                           </p>
                         </div>
-                        <Badge className={status.color}>
-                          <StatusIcon className="h-3 w-3 mr-1" />
-                          {status.label}
+                        <Badge className={cn(status.color, "p-1.5")} title={status.label}>
+                          <StatusIcon className="h-4 w-4" />
                         </Badge>
                       </div>
 

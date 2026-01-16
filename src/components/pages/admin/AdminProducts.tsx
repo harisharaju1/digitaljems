@@ -135,7 +135,11 @@ export function AdminProducts() {
       {/* Mobile: Product Cards */}
       <div className="space-y-3 md:hidden">
         {filteredProducts.map((product) => (
-          <Card key={product.id} className="overflow-hidden">
+          <Card 
+            key={product.id} 
+            className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => navigate(`/product/${product.id}`)}
+          >
             <CardContent className="p-0">
               <div className="flex gap-3 p-3">
                 <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
@@ -160,26 +164,28 @@ export function AdminProducts() {
                     <span className="text-xs text-muted-foreground">Stock: {product.stock_quantity}</span>
                   </div>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/admin/products/${product.id}/edit`)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setDeletingProduct(product)}
-                      className="text-destructive"
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => navigate(`/admin/products/${product.id}/edit`)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setDeletingProduct(product)}
+                        className="text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -202,7 +208,11 @@ export function AdminProducts() {
             </TableHeader>
             <TableBody>
               {filteredProducts.map((product) => (
-                <TableRow key={product.id}>
+                <TableRow 
+                  key={product.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/product/${product.id}`)}
+                >
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="h-12 w-12 overflow-hidden rounded-lg bg-muted">
@@ -241,7 +251,7 @@ export function AdminProducts() {
                       {product.is_active}
                     </Badge>
                   </TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon">

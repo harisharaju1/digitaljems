@@ -20,6 +20,7 @@ import {
   Share2,
   Gem,
   Loader2,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +29,7 @@ import type { Product } from "@/components/types";
 import { useCartStore } from "@/components/store/cart-store";
 import { useWishlistStore } from "@/components/store/wishlist-store";
 import { useProductsStore } from "@/components/store/products-store";
+import { useAuthStore } from "@/components/store/auth-store";
 import { useToast } from "@/components/hooks/use-toast";
 import { cn } from "@/components/lib/utils";
 import { ProductImage } from "@/components/ui/product-image";
@@ -40,6 +42,7 @@ export function ProductDetailPage() {
   const addItem = useCartStore((state) => state.addItem);
   const { isInWishlist, toggleItem } = useWishlistStore();
   const { products, loadProducts, isLoading } = useProductsStore();
+  const { isAdmin } = useAuthStore();
   
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
@@ -341,6 +344,16 @@ export function ProductDetailPage() {
               <div className="flex items-start justify-between gap-4">
                 <h1 className="text-3xl font-bold">{product.name}</h1>
                 <div className="flex gap-2">
+                  {isAdmin && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                      title="Edit Product"
+                    >
+                      <Pencil className="h-5 w-5" />
+                    </Button>
+                  )}
                   <Button
                     variant="outline"
                     size="icon"
@@ -645,6 +658,17 @@ export function ProductDetailPage() {
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-xl font-bold">{product.name}</h1>
               <div className="flex gap-2">
+                {isAdmin && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-9 w-9"
+                    onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                    title="Edit Product"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="icon"

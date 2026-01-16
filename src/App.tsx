@@ -14,6 +14,7 @@ import { ProfilePage } from "@/components/pages/ProfilePage";
 import { OrderHistoryPage } from "@/components/pages/OrderHistoryPage";
 import { CustomRequestPage } from "@/components/pages/CustomRequestPage";
 import { MyCustomRequestsPage } from "@/components/pages/MyCustomRequestsPage";
+import { CustomRequestDetailPage } from "@/components/pages/CustomRequestDetailPage";
 import { WishlistPage } from "@/components/pages/WishlistPage";
 import { ProductDetailPage } from "@/components/pages/ProductDetailPage";
 import { AdminLayout } from "@/components/pages/admin/AdminLayout";
@@ -154,6 +155,7 @@ function App() {
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/orders" element={<OrderHistoryPage />} />
                     <Route path="/custom-request" element={<CustomRequestPage />} />
+                    <Route path="/custom-request/:id" element={<CustomRequestDetailPage />} />
                     <Route path="/my-custom-requests" element={<MyCustomRequestsPage />} />
                     <Route path="/wishlist" element={<WishlistPage />} />
                     <Route path="*" element={<NotFoundPage />} />

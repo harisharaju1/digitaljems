@@ -93,6 +93,29 @@ CREATE TABLE custom_requests (
 -- ALTER TABLE custom_requests ADD COLUMN IF NOT EXISTS customer_phone TEXT DEFAULT '';
 -- ALTER TABLE custom_requests ADD COLUMN IF NOT EXISTS customer_name TEXT;
 
+-- Custom Request Comments Table
+CREATE TABLE custom_request_comments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  request_id UUID NOT NULL REFERENCES custom_requests(id) ON DELETE CASCADE,
+  customer_email TEXT NOT NULL,
+  comment_text TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Migration: Add comments table if it doesn't exist
+-- Run this if you already have the database:
+-- CREATE TABLE IF NOT EXISTS custom_request_comments (
+--   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+--   request_id UUID NOT NULL REFERENCES custom_requests(id) ON DELETE CASCADE,
+--   customer_email TEXT NOT NULL,
+--   comment_text TEXT NOT NULL,
+--   created_at TIMESTAMPTZ DEFAULT NOW(),
+--   updated_at TIMESTAMPTZ DEFAULT NOW()
+-- );
+-- CREATE INDEX IF NOT EXISTS idx_custom_request_comments_request_id ON custom_request_comments(request_id);
+-- CREATE INDEX IF NOT EXISTS idx_custom_request_comments_customer_email ON custom_request_comments(customer_email);
+
 -- User Profiles Table
 CREATE TABLE user_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -124,6 +147,8 @@ CREATE INDEX idx_orders_customer_email ON orders(customer_email);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
 CREATE INDEX idx_orders_order_status ON orders(order_status);
 CREATE INDEX idx_custom_requests_customer_email ON custom_requests(customer_email);
+CREATE INDEX idx_custom_request_comments_request_id ON custom_request_comments(request_id);
+CREATE INDEX idx_custom_request_comments_customer_email ON custom_request_comments(customer_email);
 CREATE INDEX idx_user_profiles_email ON user_profiles(email);
 CREATE INDEX idx_admin_logs_timestamp ON admin_logs(timestamp);
 
@@ -132,6 +157,7 @@ CREATE INDEX idx_admin_logs_timestamp ON admin_logs(timestamp);
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE custom_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE custom_request_comments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_logs ENABLE ROW LEVEL SECURITY;
 
@@ -150,6 +176,10 @@ CREATE POLICY "Orders are updatable by authenticated users" ON orders FOR UPDATE
 CREATE POLICY "Custom requests viewable by authenticated" ON custom_requests FOR SELECT USING (auth.role() = 'authenticated');
 CREATE POLICY "Custom requests insertable by authenticated" ON custom_requests FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 CREATE POLICY "Custom requests updatable by authenticated" ON custom_requests FOR UPDATE USING (auth.role() = 'authenticated');
+
+-- Custom Request Comments: Users can view/add comments for their own requests
+CREATE POLICY "Comments viewable by authenticated" ON custom_request_comments FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Comments insertable by authenticated" ON custom_request_comments FOR INSERT WITH CHECK (auth.role() = 'authenticated' AND auth.email() = customer_email);
 
 -- User Profiles: Users can view/update their own profile
 CREATE POLICY "Users can view own profile" ON user_profiles FOR SELECT USING (auth.email() = email);

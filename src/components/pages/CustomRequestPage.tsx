@@ -323,7 +323,11 @@ export function CustomRequestPage() {
                 const status = statusConfig[request.status] || statusConfig.pending;
 
                 return (
-                  <Card key={request.id}>
+                  <Card 
+                    key={request.id}
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => navigate(`/custom-request/${request.id}`)}
+                  >
                     <CardContent className="pt-4">
                       <div className="flex gap-4">
                         <div className="h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
