@@ -283,7 +283,10 @@ export function Header() {
                 type="search"
                 placeholder="Search jewellery..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (location.pathname !== "/") navigate("/");
+                }}
                 className="pl-10 pr-10"
               />
               {searchQuery && (
