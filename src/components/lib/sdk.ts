@@ -570,6 +570,62 @@ export const productService = {
   },
 
   /**
+   * Get products with cursor-based pagination (Step 1 — system design learning)
+   * Uses created_at as the cursor: WHERE created_at < cursor instead of OFFSET N
+   */
+  async getAllProductsPaginated(
+    limit = 12,
+    cursor?: string // created_at of the last product on the previous page
+  ): Promise<{ products: Product[]; nextCursor: string | null; hasMore: boolean }> {
+    if (isDev) {
+      // In dev mode, simulate cursor pagination against the in-memory array.
+      // Find where the cursor product sits, then slice forward from there.
+      const start = cursor
+        ? DEV_PRODUCTS.findIndex((p) => p.created_at === cursor) + 1
+        : 0;
+      const page = DEV_PRODUCTS.slice(start, start + limit);
+      return {
+        products: page,
+        nextCursor: page.at(-1)?.created_at ?? null,
+        hasMore: start + limit < DEV_PRODUCTS.length,
+      };
+    }
+
+    // Fetch one extra row — if we get back more than `limit`, a next page exists.
+    // This avoids a separate COUNT(*) query which is slow on large tables.
+    let query = supabase
+      .from("products")
+      .select("*")
+      .eq("is_active", "active")
+      .order("created_at", { ascending: false })
+      .limit(limit + 1);
+
+    // Only add the cursor filter when we have one (not on the first page).
+    // .lt("created_at", cursor) → WHERE created_at < cursor → "older than the bookmark"
+    if (cursor) {
+      query = query.lt("created_at", cursor);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const hasMore = (data || []).length > limit;
+    // Discard the extra row we fetched — it was only used to detect hasMore.
+    const products = (data || []).slice(0, limit).map((item) => ({
+      ...item,
+      images: typeof item.images === "string" ? JSON.parse(item.images) : item.images,
+      videos: typeof item.videos === "string" ? JSON.parse(item.videos) : (item.videos || []),
+    })) as Product[];
+
+    return {
+      products,
+      // The last product's created_at becomes the cursor for the next call.
+      nextCursor: products.at(-1)?.created_at ?? null,
+      hasMore,
+    };
+  },
+
+  /**
    * Get products by category
    */
   async getProductsByCategory(

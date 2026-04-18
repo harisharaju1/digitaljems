@@ -31,10 +31,13 @@ export function HomePage() {
 
   const {
     isLoading,
+    isLoadingMore,
+    hasMore,
     error,
     selectedCategory,
     filterByCategory,
     loadProducts,
+    loadMoreProducts,
     filteredProducts,
   } = useProductsStore();
 
@@ -44,17 +47,6 @@ export function HomePage() {
     loadProducts();
   }, []); // Empty deps - only run on mount
 
-  // Reload when tab becomes visible
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        loadProducts();
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [loadProducts]);
 
   // Handle category from URL
   useEffect(() => {
@@ -168,8 +160,8 @@ export function HomePage() {
           <>
             <div className="mb-6 flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
-                {products.length} product{products.length !== 1 ? "s" : ""}{" "}
-                found
+                Showing {products.length} product{products.length !== 1 ? "s" : ""}
+                {hasMore ? " — more available" : ""}
               </p>
             </div>
 
@@ -181,6 +173,21 @@ export function HomePage() {
                 />
               ))}
             </div>
+
+            {/* Load More — only shown when more pages exist beyond what's loaded */}
+            {hasMore && (
+              <div className="mt-10 flex justify-center">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  onClick={loadMoreProducts}
+                  disabled={isLoadingMore}
+                  className="min-w-[160px]"
+                >
+                  {isLoadingMore ? "Loading..." : "Load More"}
+                </Button>
+              </div>
+            )}
           </>
         )}
       </section>
