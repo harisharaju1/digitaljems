@@ -5,6 +5,8 @@
  */
 
 import { supabase, RESEND_API_KEY } from "./supabase";
+import { cache } from "./cache";
+import { config } from "./config";
 import type {
   Product,
   Order,
@@ -653,9 +655,19 @@ export const productService = {
   },
 
   /**
-   * Get single product by ID
+   * Get single product by ID — with per-product cache (Step 2 — SWR caching)
+   * Individual products use a longer TTL (5 min) since they change less often than listings.
    */
   async getProductById(productId: string): Promise<Product | null> {
+    // CONCEPT: template literal as dynamic cache key — each product gets its own entry
+    const cacheKey = `product:${productId}`;
+    const cached = cache.get<Product>(cacheKey);
+
+    // CONCEPT: early return from cache — skip the network call if data is still fresh
+    if (cached && !cache.isStale(cacheKey, config.cache.productDetailTtlMs)) {
+      return cached;
+    }
+
     if (isDev) return DEV_PRODUCTS.find((p) => p.id === productId) || null;
 
     const { data, error } = await supabase
@@ -666,13 +678,16 @@ export const productService = {
 
     if (error) return null;
 
-    return {
+    const product = {
       ...data,
       images:
         typeof data.images === "string" ? JSON.parse(data.images) : data.images,
       videos:
         typeof data.videos === "string" ? JSON.parse(data.videos) : (data.videos || []),
     } as Product;
+
+    cache.set(cacheKey, product); // cache for future lookups
+    return product;
   },
 
   /**

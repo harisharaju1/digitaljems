@@ -6,7 +6,11 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { productService } from "@/components/lib/sdk";
+import { cache } from "@/components/lib/cache";
+import { config } from "@/components/lib/config";
 import type { Product, ProductCategory } from "@/components/types";
+
+const PRODUCTS_CACHE_KEY = "products:page1";
 
 interface ProductsState {
   // State
@@ -43,12 +47,39 @@ export const useProductsStore = create<ProductsState>()(
       selectedCategory: "all",
       searchQuery: "",
 
-      // Fetch the first page — resets all pagination state
+      // Fetch the first page with SWR caching (Step 2 — system design learning)
       loadProducts: async () => {
+        type PageResult = { products: Product[]; nextCursor: string | null; hasMore: boolean };
+        const cached = cache.get<PageResult>(PRODUCTS_CACHE_KEY);
+
+        if (cached) {
+          if (!cache.isStale(PRODUCTS_CACHE_KEY, config.cache.productsListTtlMs)) {
+            // CONCEPT: SWR FRESH path — data is < 60s old, serve from cache immediately.
+            // No network call, no loading state — the user sees products at 0ms.
+            set({ products: cached.products, nextCursor: cached.nextCursor, hasMore: cached.hasMore });
+            return; // CONCEPT: early return — nothing else to do
+          }
+
+          // CONCEPT: SWR STALE path — data is > 60s old.
+          // Serve stale data immediately so the user sees something right away.
+          set({ products: cached.products, nextCursor: cached.nextCursor, hasMore: cached.hasMore });
+
+          // CONCEPT: floating Promise — start the re-fetch without awaiting it.
+          // The function returns to React immediately; the fetch finishes in the background.
+          productService.getAllProductsPaginated(12).then((result) => {
+            cache.set(PRODUCTS_CACHE_KEY, result);
+            set({ products: result.products, nextCursor: result.nextCursor, hasMore: result.hasMore });
+          }).catch(console.error); // always handle errors on floating Promises
+
+          return; // CONCEPT: early return — user already has their products rendered
+        }
+
+        // CONCEPT: SWR MISSING path — no cache entry at all. Fetch normally with loading state.
         set({ isLoading: true, error: null, products: [], nextCursor: null, hasMore: true });
 
         try {
           const result = await productService.getAllProductsPaginated(12);
+          cache.set(PRODUCTS_CACHE_KEY, result); // populate cache for future visits
           set({
             products: result.products,
             nextCursor: result.nextCursor,
@@ -63,6 +94,7 @@ export const useProductsStore = create<ProductsState>()(
             await new Promise(resolve => setTimeout(resolve, 500));
             try {
               const result = await productService.getAllProductsPaginated(12);
+              cache.set(PRODUCTS_CACHE_KEY, result);
               set({
                 products: result.products,
                 nextCursor: result.nextCursor,

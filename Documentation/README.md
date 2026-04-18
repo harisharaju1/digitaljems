@@ -11,7 +11,7 @@ This folder documents the system design learning journey built on top of the Dig
 | Step | Concept | Category | Difficulty | Status | Doc |
 |------|---------|----------|------------|--------|-----|
 | 1 | Cursor-based pagination | Data layer | Beginner | Done | [step-01](./step-01-cursor-based-pagination.md) |
-| 2 | Stale-while-revalidate caching | Data layer | Beginner | Not Started | — |
+| 2 | Stale-while-revalidate caching | Data layer | Beginner | Done | [step-02](./step-02-swr-caching.md) |
 | 3 | Full-text search + GIN indexes | Data layer | Intermediate | Not Started | — |
 | 4 | Optimistic updates | API reliability | Intermediate | Not Started | — |
 | 5 | Inventory transactions + race conditions | API reliability | Intermediate | Not Started | — |

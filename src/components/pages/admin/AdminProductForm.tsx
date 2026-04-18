@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/hooks/use-toast";
 import { productService, adminLogService, storageService } from "@/components/lib/sdk";
+import { cache } from "@/components/lib/cache";
 import { cn } from "@/components/lib/utils";
 import type { Product, ProductFormData, ProductCategory, MetalType, MetalPurity } from "@/components/types";
 
@@ -70,8 +71,9 @@ export function AdminProductForm() {
 
   const loadProduct = async (productId: string) => {
     try {
-      const products = await productService.getAllProducts();
-      const product = products.find((p) => p.id === productId);
+      // CONCEPT: event-based invalidation — use getProductById() directly instead of
+      // fetching all products and finding one. getProductById() is also cache-aware.
+      const product = await productService.getProductById(productId);
       if (product) {
         setFormData({
           name: product.name,
@@ -350,12 +352,20 @@ export function AdminProductForm() {
         await adminLogService.logAction("product_updated", "product", id, {
           name: formData.name,
         });
+        // CONCEPT: event-based cache invalidation — the product changed, so clear
+        // both the product list cache and this product's individual cache entry.
+        // The next loadProducts() or getProductById() call will fetch fresh data.
+        cache.invalidateByPrefix("products");
+        cache.invalidate(`product:${id}`);
         toast({ title: "Product updated successfully" });
       } else {
         const newProduct = await productService.createProduct(dataToSave);
         await adminLogService.logAction("product_created", "product", newProduct.id, {
           name: formData.name,
         });
+        // CONCEPT: event-based cache invalidation — a new product exists that the
+        // cached list doesn't know about. Invalidate so the list re-fetches.
+        cache.invalidateByPrefix("products");
         toast({ title: "Product created successfully" });
       }
 
