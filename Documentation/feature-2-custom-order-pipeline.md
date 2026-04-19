@@ -384,7 +384,7 @@ All follow the `if (isDev)` pattern. Dev mocks: 3 seeded vendors, `DEV_SETTINGS 
 
 ---
 
-## Phase 4 — Out-of-Stock → MTO Conversion + Deposit Split (L)
+## Phase 4 — Out-of-Stock → MTO Conversion + Deposit Split (L) ✓ Done — [step-04 doc](./feature-2-step-04-mto-conversion-deposit-split.md)
 
 **Goal:** `mto_required=true` from `stockService.reserve()` shows MTO dialog, creates job, charges deposit only. Admin triggers final payment separately.
 

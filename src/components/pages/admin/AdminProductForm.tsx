@@ -4,9 +4,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Upload, X } from "lucide-react";
+import { ArrowLeft, Loader2, Upload, X, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -45,6 +46,9 @@ const emptyForm: ProductFormData = {
   images: [],
   stock_quantity: 0,
   is_active: "active",
+  allow_mto: false,
+  mto_lead_time_weeks: 4,
+  mto_deposit_pct: undefined,
 };
 
 export function AdminProductForm() {
@@ -100,6 +104,9 @@ export function AdminProductForm() {
           stone_grade: product.stone_grade,
           stone_setting: product.stone_setting,
           stone_count: product.stone_count,
+          allow_mto: product.allow_mto ?? false,
+          mto_lead_time_weeks: product.mto_lead_time_weeks ?? 4,
+          mto_deposit_pct: product.mto_deposit_pct,
         });
         setImageUrls(product.images.join("\n"));
         setUploadedImages(product.images);
@@ -826,6 +833,56 @@ export function AdminProductForm() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Made-to-Order Settings */}
+          <div className="space-y-4 border-t pt-4">
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-muted-foreground" />
+              <h3 className="font-semibold">Made-to-Order</h3>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="allow_mto">Enable Made-to-Order</Label>
+                <p className="text-xs text-muted-foreground">Allow customers to order when out of stock</p>
+              </div>
+              <Switch
+                id="allow_mto"
+                checked={formData.allow_mto ?? false}
+                onCheckedChange={(checked) => setFormData({ ...formData, allow_mto: checked })}
+              />
+            </div>
+
+            {formData.allow_mto && (
+              <div className="grid grid-cols-2 gap-4 pl-1">
+                <div className="space-y-2">
+                  <Label htmlFor="mto_lead_time_weeks">Lead Time (weeks)</Label>
+                  <Input
+                    id="mto_lead_time_weeks"
+                    type="number"
+                    min="1"
+                    max="52"
+                    value={formData.mto_lead_time_weeks ?? ""}
+                    onChange={(e) => setFormData({ ...formData, mto_lead_time_weeks: e.target.value === "" ? undefined : parseInt(e.target.value) })}
+                    placeholder="4"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="mto_deposit_pct">Deposit % (blank = global default)</Label>
+                  <Input
+                    id="mto_deposit_pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={formData.mto_deposit_pct ?? ""}
+                    onChange={(e) => setFormData({ ...formData, mto_deposit_pct: e.target.value === "" ? undefined : parseFloat(e.target.value) })}
+                    placeholder="50"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Status */}

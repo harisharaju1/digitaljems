@@ -4,12 +4,13 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Truck, MessageCircle, Phone } from "lucide-react";
+import { ArrowLeft, Loader2, Truck, MessageCircle, Phone, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { orderService } from "@/components/lib/sdk";
+import { FinalInvoiceDialog } from "@/components/admin/FinalInvoiceDialog";
 import type { Order } from "@/components/types";
 
 const statusColors: Record<string, string> = {
@@ -30,6 +31,7 @@ export function AdminOrderDetail() {
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [finalInvoiceOpen, setFinalInvoiceOpen] = useState(false);
 
   useEffect(() => {
     if (id) loadOrder(id);
@@ -210,6 +212,44 @@ export function AdminOrderDetail() {
           </CardContent>
         </Card>
 
+        {/* MTO Payment Split — shown only for MTO orders */}
+        {order.payment_split && (
+          <Card className="border-purple-200 bg-purple-50 dark:bg-purple-950/20">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center justify-between">
+                MTO Payment Split
+                {order.payment_split.final.status === "not_due" && (
+                  <Button size="sm" onClick={() => setFinalInvoiceOpen(true)}>
+                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                    Send Final Invoice
+                  </Button>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-medium">Deposit</p>
+                  <p className="text-muted-foreground">{formatCurrency(order.payment_split.deposit.amount)}</p>
+                </div>
+                <Badge className={order.payment_split.deposit.status === "paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                  {order.payment_split.deposit.status}
+                </Badge>
+              </div>
+              <Separator />
+              <div className="flex justify-between items-center">
+                <div>
+                  <p className="font-medium">Final Payment</p>
+                  <p className="text-muted-foreground">{formatCurrency(order.payment_split.final.amount)}</p>
+                </div>
+                <Badge className={order.payment_split.final.status === "paid" ? "bg-green-100 text-green-800" : order.payment_split.final.status === "not_due" ? "bg-gray-100 text-gray-800" : "bg-yellow-100 text-yellow-800"}>
+                  {order.payment_split.final.status === "not_due" ? "not due yet" : order.payment_split.final.status}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Tracking Info */}
         {order.tracking_number && (
           <Card className="bg-blue-50 border-blue-200">
@@ -237,6 +277,15 @@ export function AdminOrderDetail() {
           </Card>
         )}
       </div>
+
+      {order.payment_split && (
+        <FinalInvoiceDialog
+          open={finalInvoiceOpen}
+          onOpenChange={setFinalInvoiceOpen}
+          order={order}
+          onSuccess={() => loadOrder(order.id)}
+        />
+      )}
     </div>
   );
 }

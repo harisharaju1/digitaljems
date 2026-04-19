@@ -63,6 +63,21 @@ export type MetalPurity =
   | "950_platinum";
 
 // ============= Order Types =============
+export interface OrderPaymentSplit {
+  deposit: {
+    amount: number;
+    status: "pending" | "paid";
+    payment_id?: string;
+    paid_at?: string;
+  };
+  final: {
+    amount: number;
+    status: "pending" | "paid" | "not_due";
+    payment_id?: string;
+    paid_at?: string;
+  };
+}
+
 export interface Order {
   id: string;
   order_number: string;
@@ -82,6 +97,9 @@ export interface Order {
   tracking_number?: string;
   shipping_provider?: string;
   notes?: string;
+  // MTO fields (Feature 2, Phase 4)
+  custom_job_id?: string;
+  payment_split?: OrderPaymentSplit;
   created_at: string;
   updated_at: string;
 }
@@ -181,7 +199,8 @@ export type AdminActionType =
   | "vendor_updated"
   | "job_created"
   | "job_status_changed"
-  | "milestone_updated";
+  | "milestone_updated"
+  | "mto_converted";
 
 // ============= Form Types =============
 export interface CheckoutFormData {
@@ -216,6 +235,10 @@ export interface ProductFormData {
   stone_grade?: string;
   stone_setting?: string;
   stone_count?: number;
+  // MTO fields (Feature 2, Phase 4)
+  allow_mto?: boolean;
+  mto_lead_time_weeks?: number;
+  mto_deposit_pct?: number;
 }
 
 // ============= Filter Types =============

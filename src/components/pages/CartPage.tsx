@@ -4,8 +4,9 @@
  */
 
 import { useNavigate } from "react-router-dom";
-import { Trash2, ShoppingBag, Sparkles, ArrowRight } from "lucide-react";
+import { Trash2, ShoppingBag, Sparkles, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/components/store/cart-store";
@@ -71,6 +72,13 @@ export function CartPage() {
                               {item.product.metal_purity.toUpperCase()} •{" "}
                               {item.product.weight_grams}g
                             </p>
+                            {/* CONCEPT: MTO hint — stock might dip below cart qty between add and checkout; badge informs the customer proactively */}
+                            {item.product.stock_quantity < item.quantity && item.product.allow_mto && (
+                              <Badge variant="outline" className="mt-1 w-fit text-xs border-amber-400 text-amber-700 dark:text-amber-400">
+                                <Clock className="h-3 w-3 mr-1" />
+                                Made-to-order eligible
+                              </Badge>
+                            )}
                           </div>
                           <Button
                             variant="ghost"

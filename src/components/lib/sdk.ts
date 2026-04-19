@@ -1013,6 +1013,95 @@ export const orderService = {
 
     if (error) throw error;
   },
+
+  /**
+   * Create an MTO order charging only the deposit upfront.
+   * payment_split JSONB tracks deposit + final payment lifecycle.
+   */
+  async createMTOOrder(
+    checkoutData: CheckoutFormData,
+    items: OrderItem[],
+    totals: { subtotal: number; totalSavings: number; shippingCost: number; totalAmount: number },
+    depositAmount: number
+  ): Promise<Order> {
+    const orderNumber = this.generateOrderNumber();
+    const now = new Date().toISOString();
+    const finalAmount = totals.totalAmount - depositAmount;
+
+    const paymentSplit = {
+      deposit: { amount: depositAmount, status: "pending" },
+      final: { amount: finalAmount, status: "not_due" },
+    };
+
+    const order = {
+      order_number: orderNumber,
+      customer_email: checkoutData.customer_email,
+      customer_phone: checkoutData.customer_phone,
+      customer_name: checkoutData.customer_name,
+      shipping_address: JSON.stringify(checkoutData.shipping_address),
+      items: JSON.stringify(items),
+      subtotal: totals.subtotal,
+      total_savings: totals.totalSavings,
+      shipping_cost: totals.shippingCost,
+      total_amount: totals.totalAmount,
+      payment_status: "pending",
+      order_status: "mto_awaiting_deposit",
+      payment_split: paymentSplit,
+      created_at: now,
+      updated_at: now,
+    };
+
+    if (isDev) {
+      const devOrder: Order = {
+        id: `ord-dev-${Date.now()}`,
+        ...order,
+        payment_status: "pending" as Order["payment_status"],
+        order_status: "mto_awaiting_deposit" as Order["order_status"],
+        shipping_address: checkoutData.shipping_address,
+        items,
+        payment_split: paymentSplit as Order["payment_split"],
+      };
+      return devOrder;
+    }
+
+    const { data, error } = await supabase
+      .from("orders")
+      .insert(order)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      ...data,
+      shipping_address: checkoutData.shipping_address,
+      items,
+    } as Order;
+  },
+
+  /**
+   * Record deposit paid and advance order to in-production.
+   */
+  async updateMTODepositPaid(orderId: string, paymentId: string, depositAmount: number, finalAmount: number): Promise<void> {
+    const now = new Date().toISOString();
+    const paymentSplit = {
+      deposit: { amount: depositAmount, status: "paid", payment_id: paymentId, paid_at: now },
+      final: { amount: finalAmount, status: "not_due" },
+    };
+
+    const { error } = await supabase
+      .from("orders")
+      .update({
+        payment_status: "paid",
+        payment_id: paymentId,
+        order_status: "mto_in_production",
+        payment_split: paymentSplit,
+        updated_at: now,
+      })
+      .eq("id", orderId);
+
+    if (error) throw error;
+  },
 };
 
 // ============= Custom Request Service =============
@@ -1787,13 +1876,19 @@ export const customJobService = {
     return data as CustomJob;
   },
 
-  async createMTO(product_id: string, order_id: string, spec: Record<string, unknown>): Promise<CustomJob> {
+  async createMTO(
+    product_id: string,
+    order_id: string,
+    customerInfo: { email: string; name?: string; phone?: string },
+    spec: Record<string, unknown>
+  ): Promise<CustomJob> {
     if (isDev) {
       const now = new Date().toISOString();
       const id = `cj-dev-${Date.now()}`;
       const job: CustomJobDetail = {
         id, job_number: makeDevJobNumber(), source: "mto", product_id, order_id,
-        customer_email: "user@test.com", title: "Made-to-Order", specification: spec,
+        customer_email: customerInfo.email, customer_name: customerInfo.name, customer_phone: customerInfo.phone,
+        title: (spec.title as string) || "Made-to-Order", specification: spec,
         status: "intake", deposit_amount: 0, deposit_paid: false, final_amount: 0, final_paid: false,
         tracking_token: makeDevTrackingToken(), created_at: now, updated_at: now,
         milestones: makeDefaultMilestones(id),
@@ -1805,7 +1900,8 @@ export const customJobService = {
     const now = new Date().toISOString();
     const { data, error } = await supabase.from("custom_jobs").insert({
       source: "mto", product_id, order_id, specification: spec,
-      customer_email: "", title: "Made-to-Order",
+      customer_email: customerInfo.email, customer_name: customerInfo.name, customer_phone: customerInfo.phone,
+      title: (spec.title as string) || "Made-to-Order",
       tracking_token: crypto.randomUUID(),
       status: "intake", deposit_amount: 0, deposit_paid: false, final_amount: 0, final_paid: false,
       created_at: now, updated_at: now,

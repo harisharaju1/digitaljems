@@ -14,13 +14,14 @@ import { FormField } from "@/components/ui/form-field";
 import { useToast } from "@/components/hooks/use-toast";
 import { useCartStore } from "@/components/store/cart-store";
 import { useAuthStore } from "@/components/store/auth-store";
-import { orderService, emailNotificationService, stockService } from "@/components/lib/sdk";
+import { orderService, emailNotificationService, stockService, customJobService } from "@/components/lib/sdk";
 import { checkoutFormSchema, validateForm, type CheckoutFormValues } from "@/components/lib/validation";
 import { initiatePayment } from "@/components/lib/payments";
 import { ecommerceEvents } from "@/components/lib/analytics";
 import { captureException } from "@/components/lib/error-tracking";
 import { PageSEO } from "@/components/SEO";
-import type { CheckoutFormData, OrderItem } from "@/components/types";
+import { MTOConfirmDialog, type MTODialogInfo } from "@/components/checkout/MTOConfirmDialog";
+import type { CheckoutFormData, OrderItem, CartItem } from "@/components/types";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -30,6 +31,14 @@ export function CheckoutPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // MTO dialog state — holds info to resume checkout after customer confirms
+  const [mtoDialogOpen, setMtoDialogOpen] = useState(false);
+  const [mtoDialogInfo, setMtoDialogInfo] = useState<MTODialogInfo | null>(null);
+  const [mtoContext, setMtoContext] = useState<{
+    checkoutData: CheckoutFormData;
+    mtoItem: CartItem;
+    reservedItems: { product_id: string; qty: number }[];
+  } | null>(null);
   const [formData, setFormData] = useState<CheckoutFormData>({
     customer_name: user?.name || profile?.name || "",
     customer_email: user?.email || profile?.email || "",
@@ -92,6 +101,90 @@ export function CheckoutPage() {
     return result.data!;
   };
 
+  const handleMTOCancel = async () => {
+    setMtoDialogOpen(false);
+    if (mtoContext) {
+      for (const ri of mtoContext.reservedItems) {
+        await stockService.release(ri.product_id, ri.qty).catch(() => {});
+      }
+      setMtoContext(null);
+      setMtoDialogInfo(null);
+    }
+  };
+
+  const handleMTOAccept = async () => {
+    if (!mtoContext || !mtoDialogInfo) return;
+    setMtoDialogOpen(false);
+    setIsSubmitting(true);
+
+    const { checkoutData, mtoItem } = mtoContext;
+
+    try {
+      const orderItems: OrderItem[] = items.map((i) => ({
+        product_id: i.product.id,
+        name: i.product.name,
+        price: i.product.price,
+        quantity: i.quantity,
+        image: i.product.images[0],
+        weight_grams: i.product.weight_grams,
+        making_charges_saved: i.product.making_charges_saved,
+      }));
+
+      // Create order with MTO status — only deposit charged now
+      const mtoOrder = await orderService.createMTOOrder(
+        checkoutData,
+        orderItems,
+        { subtotal, totalSavings, shippingCost: SHIPPING_COST, totalAmount: total },
+        mtoDialogInfo.depositAmount
+      );
+
+      // Charge deposit only
+      const depositResult = await initiatePayment({
+        orderId: mtoOrder.order_number,
+        amount: mtoDialogInfo.depositAmount * 100,
+        customerName: checkoutData.customer_name,
+        customerEmail: checkoutData.customer_email,
+        customerPhone: checkoutData.customer_phone,
+        description: `MTO Deposit — ${mtoItem.product.name}`,
+      });
+
+      if (!depositResult.success) {
+        await orderService.updateOrderStatus(mtoOrder.id, "payment_failed");
+        toast({ title: "Deposit payment cancelled", description: depositResult.error || "Please try again", variant: "destructive" });
+        setIsSubmitting(false);
+        setMtoContext(null);
+        return;
+      }
+
+      // Record deposit paid on order
+      await orderService.updateMTODepositPaid(
+        mtoOrder.id,
+        depositResult.paymentId!,
+        mtoDialogInfo.depositAmount,
+        mtoDialogInfo.finalAmount
+      );
+
+      // Create linked custom job so production tracking works
+      await customJobService.createMTO(
+        mtoItem.product.id,
+        mtoOrder.id,
+        { email: checkoutData.customer_email, name: checkoutData.customer_name, phone: checkoutData.customer_phone },
+        { title: mtoItem.product.name, qty: mtoItem.quantity }
+      );
+
+      clearCart();
+      toast({ title: "MTO order confirmed!", description: `Deposit of ₹${mtoDialogInfo.depositAmount.toLocaleString("en-IN")} paid. We'll keep you updated.` });
+      navigate(`/order-confirmation/${mtoOrder.order_number}`);
+    } catch (error) {
+      captureException(error as Error, { context: "mto_checkout" });
+      toast({ title: "MTO order failed", description: error instanceof Error ? error.message : "Please try again", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+      setMtoContext(null);
+      setMtoDialogInfo(null);
+    }
+  };
+
   const handlePlaceOrder = async () => {
     const validatedData = validateCheckoutForm();
     if (!validatedData) return;
@@ -128,16 +221,22 @@ export function CheckoutPage() {
           return;
         }
         if (result.mto_required) {
-          // Out of stock — MTO checkout handled in Phase 4; abort for now
-          for (const ri of reservedItems) {
-            await stockService.release(ri.product_id, ri.qty).catch(() => {});
-          }
-          toast({
-            title: "Item out of stock",
-            description: `${item.product.name} is currently out of stock. Made-to-order will be available soon.`,
-            variant: "destructive",
+          // CONCEPT: dialog-based checkout pause — save context and show the MTO
+          // dialog; the flow resumes in handleMTOAccept when the customer confirms.
+          const depositPct = item.product.mto_deposit_pct ?? 50;
+          const itemTotal = item.product.price * item.quantity;
+          const depositAmount = Math.round(itemTotal * depositPct / 100);
+          setMtoDialogInfo({
+            productName: item.product.name,
+            leadTimeWeeks: item.product.mto_lead_time_weeks ?? 4,
+            depositAmount,
+            finalAmount: itemTotal - depositAmount,
+            totalAmount: itemTotal,
+            depositPct,
           });
+          setMtoContext({ checkoutData: formData, mtoItem: item, reservedItems: [...reservedItems] });
           setIsSubmitting(false);
+          setMtoDialogOpen(true);
           return;
         }
         reservedItems.push({ product_id: item.product.id, qty: item.quantity });
@@ -241,6 +340,12 @@ export function CheckoutPage() {
   return (
     <div className="min-h-screen bg-background">
       <PageSEO.Checkout />
+      <MTOConfirmDialog
+        open={mtoDialogOpen}
+        info={mtoDialogInfo}
+        onAccept={handleMTOAccept}
+        onCancel={handleMTOCancel}
+      />
       <div className="container mx-auto px-4 py-8">
         <h1 className="mb-8 text-3xl font-bold">Checkout</h1>
 
