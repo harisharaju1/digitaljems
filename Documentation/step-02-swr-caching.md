@@ -4,6 +4,12 @@
 **Status:** Done
 **Difficulty:** Beginner
 
+SWR (Stale-While-Revalidate) is predominantly a data-fetching strategy used on the client-side (like React apps) or edge/CDNs. When an application requests data, SWR will immediately return the "stale" cached data to the user to ensure a fast UI response, while simultaneously making a background request to the database/API to fetch the freshest data and update the cache.
+#### How they compare:
+**SWR vs. Cache-Aside:** While both strategies populate the cache based on read requests, Cache-Aside forces the user to wait for the database fetch if the cache is expired or missing. SWR prioritizes immediate rendering by returning stale data first, masking the database fetch latency entirely from the user's perspective.
+**SWR vs. Write-Through:** Write-Through is primarily a backend architecture choice focused on safely writing data to ensure 100% consistency between memory and the database
+. SWR is heavily focused on the read experience, accepting temporary inconsistency (showing stale data for a moment) to achieve perceived zero-latency loads.
+
 ---
 
 ## The Problem We're Solving

@@ -17,6 +17,14 @@ import type {
   CheckoutFormData,
   OrderItem,
   ShippingAddress,
+  Vendor,
+  VendorSpecialty,
+  CustomJob,
+  CustomJobDetail,
+  CustomJobMilestone,
+  CustomJobPublic,
+  CustomJobStatus,
+  MilestoneName,
 } from "@/components/types";
 
 // ============= Dev Mode Test Users =============
@@ -1432,6 +1440,71 @@ export const emailNotificationService = {
   },
 };
 
+// ============= Dev Vendor Data (Feature 2) =============
+const DEV_VENDORS: Vendor[] = [
+  { id: "v1", name: "Raju Karigar", specialties: ["casting", "stone_setting"], reliability_score: 4.8, active: true, phone: "9876543210", created_at: new Date().toISOString() },
+  { id: "v2", name: "Silver Works", specialties: ["polishing"], reliability_score: 4.5, active: true, phone: "9876543211", created_at: new Date().toISOString() },
+  { id: "v3", name: "CAD Designs", specialties: ["cad"], reliability_score: 4.2, active: true, phone: "9876543212", created_at: new Date().toISOString() },
+];
+
+const DEV_SETTINGS: Record<string, unknown> = { mto_default_deposit_pct: 50 };
+
+// ============= Dev Custom Job Data (Feature 2, Phase 2) =============
+const ALL_MILESTONE_NAMES: MilestoneName[] = ["design_approved", "cad_ready", "wax_model", "casting", "stone_setting", "finishing", "qc", "ready"];
+
+function makeDefaultMilestones(job_id: string): CustomJobMilestone[] {
+  return ALL_MILESTONE_NAMES.map((m, i) => ({
+    id: `${job_id}-m${i}`,
+    job_id,
+    milestone: m,
+    status: "pending" as const,
+    photos: [],
+  }));
+}
+
+let _devJobCounter = 3;
+function makeDevJobNumber() { return `CJ-2026-${String(_devJobCounter++).padStart(4, "0")}`; }
+function makeDevTrackingToken() { return `dev-track-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`; }
+
+let DEV_JOBS: CustomJobDetail[] = [
+  {
+    id: "cj-dev-001", job_number: "CJ-2026-0001", source: "custom_request",
+    customer_email: "user1@test.com", customer_name: "Test User 1", customer_phone: "9876543210",
+    vendor_id: "v1", title: "Custom Diamond Ring - Customer Design",
+    specification: { metal: "18k gold", stone: "0.5ct diamond", size: "US 7" },
+    status: "in_production", deposit_amount: 25000, deposit_paid: true, final_amount: 50000, final_paid: false,
+    estimated_ready_date: "2026-05-15", tracking_token: "dev-token-001",
+    created_at: new Date(Date.now() - 7 * 86400000).toISOString(), updated_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+    vendor: { id: "v1", name: "Raju Karigar", specialties: ["casting", "stone_setting"], reliability_score: 4.8, active: true, phone: "9876543210", created_at: new Date().toISOString() },
+    milestones: [
+      { id: "cj-dev-001-m0", job_id: "cj-dev-001", milestone: "design_approved", status: "done", photos: [], completed_at: new Date(Date.now() - 6 * 86400000).toISOString(), completed_by: "admin@test.com" },
+      { id: "cj-dev-001-m1", job_id: "cj-dev-001", milestone: "cad_ready", status: "done", photos: [], completed_at: new Date(Date.now() - 4 * 86400000).toISOString(), completed_by: "admin@test.com" },
+      { id: "cj-dev-001-m2", job_id: "cj-dev-001", milestone: "wax_model", status: "done", photos: [], completed_at: new Date(Date.now() - 2 * 86400000).toISOString(), completed_by: "admin@test.com" },
+      { id: "cj-dev-001-m3", job_id: "cj-dev-001", milestone: "casting", status: "in_progress", photos: [], note: "Casting in progress" },
+      { id: "cj-dev-001-m4", job_id: "cj-dev-001", milestone: "stone_setting", status: "pending", photos: [] },
+      { id: "cj-dev-001-m5", job_id: "cj-dev-001", milestone: "finishing", status: "pending", photos: [] },
+      { id: "cj-dev-001-m6", job_id: "cj-dev-001", milestone: "qc", status: "pending", photos: [] },
+      { id: "cj-dev-001-m7", job_id: "cj-dev-001", milestone: "ready", status: "pending", photos: [] },
+    ],
+  },
+  {
+    id: "cj-dev-002", job_number: "CJ-2026-0002", source: "mto",
+    customer_email: "user2@test.com", customer_name: "Test User 2", customer_phone: "9876543211",
+    vendor_id: "v3", title: "Made-to-Order Silver Pendant",
+    specification: { metal: "925 silver", design: "floral", chain_length: "18 inches" },
+    status: "design", deposit_amount: 3000, deposit_paid: false, final_amount: 6000, final_paid: false,
+    tracking_token: "dev-token-002",
+    created_at: new Date(Date.now() - 2 * 86400000).toISOString(), updated_at: new Date(Date.now() - 86400000).toISOString(),
+    vendor: { id: "v3", name: "CAD Designs", specialties: ["cad"], reliability_score: 4.2, active: true, phone: "9876543212", created_at: new Date().toISOString() },
+    milestones: [
+      { id: "cj-dev-002-m0", job_id: "cj-dev-002", milestone: "design_approved", status: "in_progress", photos: [] },
+      ...["cad_ready", "wax_model", "casting", "stone_setting", "finishing", "qc", "ready"].map((m, i) => ({
+        id: `cj-dev-002-m${i + 1}`, job_id: "cj-dev-002", milestone: m as MilestoneName, status: "pending" as const, photos: [],
+      })),
+    ],
+  },
+];
+
 // ============= Admin Log Service =============
 export const adminLogService = {
   /**
@@ -1484,5 +1557,328 @@ export const adminLogService = {
           ? JSON.parse(item.details)
           : item.details,
     })) as AdminLog[];
+  },
+};
+
+// ============= Vendor Service (Feature 2, Phase 1) =============
+export const vendorService = {
+  async list(filter?: { active?: boolean }): Promise<Vendor[]> {
+    if (isDev) {
+      const vendors = filter?.active !== undefined
+        ? DEV_VENDORS.filter(v => v.active === filter.active)
+        : DEV_VENDORS;
+      return [...vendors];
+    }
+
+    let query = supabase.from("vendors").select("*").order("name");
+    if (filter?.active !== undefined) {
+      query = query.eq("active", filter.active) as typeof query;
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []) as Vendor[];
+  },
+
+  async get(id: string): Promise<Vendor> {
+    if (isDev) {
+      const vendor = DEV_VENDORS.find(v => v.id === id);
+      if (!vendor) throw new Error("Vendor not found");
+      return { ...vendor };
+    }
+
+    const { data, error } = await supabase.from("vendors").select("*").eq("id", id).single();
+    if (error) throw error;
+    return data as Vendor;
+  },
+
+  async create(input: Omit<Vendor, "id" | "reliability_score" | "created_at">): Promise<Vendor> {
+    if (isDev) {
+      const vendor: Vendor = { ...input, id: `v-${Date.now()}`, reliability_score: 5.0, created_at: new Date().toISOString() };
+      DEV_VENDORS.push(vendor);
+      console.log("[DEV] Vendor created:", vendor.name);
+      return vendor;
+    }
+
+    const { data, error } = await supabase.from("vendors").insert(input).select().single();
+    if (error) throw error;
+    return data as Vendor;
+  },
+
+  async update(id: string, patch: Partial<Vendor>): Promise<Vendor> {
+    if (isDev) {
+      const idx = DEV_VENDORS.findIndex(v => v.id === id);
+      if (idx === -1) throw new Error("Vendor not found");
+      DEV_VENDORS[idx] = { ...DEV_VENDORS[idx], ...patch };
+      return { ...DEV_VENDORS[idx] };
+    }
+
+    const { data, error } = await supabase.from("vendors").update(patch).eq("id", id).select().single();
+    if (error) throw error;
+    return data as Vendor;
+  },
+
+  async archive(id: string): Promise<void> {
+    if (isDev) {
+      const idx = DEV_VENDORS.findIndex(v => v.id === id);
+      if (idx !== -1) DEV_VENDORS[idx] = { ...DEV_VENDORS[idx], active: false };
+      return;
+    }
+
+    const { error } = await supabase.from("vendors").update({ active: false }).eq("id", id);
+    if (error) throw error;
+  },
+};
+
+// ============= Stock Service (Feature 2, Phase 1) =============
+// CONCEPT: atomic reservation — both read and write happen in one DB transaction via RPC,
+// preventing the race condition where two buyers claim the last item simultaneously.
+export const stockService = {
+  async reserve(product_id: string, qty: number): Promise<{ reserved: number; remaining: number; mto_required: boolean }> {
+    if (isDev) {
+      const idx = DEV_PRODUCTS.findIndex(p => p.id === product_id);
+      if (idx === -1) throw new Error("Product not found");
+      const product = DEV_PRODUCTS[idx];
+      if (product.stock_quantity >= qty) {
+        DEV_PRODUCTS[idx] = { ...product, stock_quantity: product.stock_quantity - qty };
+        return { reserved: qty, remaining: product.stock_quantity - qty, mto_required: false };
+      } else if (product.allow_mto) {
+        return { reserved: 0, remaining: product.stock_quantity, mto_required: true };
+      } else {
+        throw new Error(`Insufficient stock for "${product.name}"`);
+      }
+    }
+
+    // CONCEPT: RPC call — delegates atomic read-modify-write to Postgres,
+    // where FOR UPDATE locks the row so no two transactions overlap.
+    const { data, error } = await supabase.rpc("reserve_product_stock", { p_product_id: product_id, p_qty: qty });
+    if (error) throw error;
+    return (data as { reserved: number; remaining: number; mto_required: boolean }[])[0];
+  },
+
+  async release(product_id: string, qty: number): Promise<void> {
+    if (isDev) {
+      const idx = DEV_PRODUCTS.findIndex(p => p.id === product_id);
+      if (idx !== -1) {
+        DEV_PRODUCTS[idx] = { ...DEV_PRODUCTS[idx], stock_quantity: DEV_PRODUCTS[idx].stock_quantity + qty };
+      }
+      return;
+    }
+
+    const { error } = await supabase.rpc("release_product_stock", { p_product_id: product_id, p_qty: qty });
+    if (error) throw error;
+  },
+};
+
+// ============= App Settings Service (Feature 2, Phase 1) =============
+export const appSettingsService = {
+  async get<T>(key: string): Promise<T | null> {
+    if (isDev) return (DEV_SETTINGS[key] as T) ?? null;
+
+    const { data, error } = await supabase.from("app_settings").select("value").eq("key", key).single();
+    if (error) return null;
+    return data.value as T;
+  },
+
+  async set(key: string, value: unknown): Promise<void> {
+    if (isDev) { DEV_SETTINGS[key] = value; return; }
+
+    const { error } = await supabase.from("app_settings").upsert({ key, value, updated_by: authService.getCurrentUserEmail(), updated_at: new Date().toISOString() });
+    if (error) throw error;
+  },
+};
+
+// ============= Custom Job Service (Feature 2, Phase 2) =============
+export const customJobService = {
+  async list(filter?: { status?: CustomJobStatus; vendor_id?: string; source?: string; q?: string }): Promise<CustomJob[]> {
+    if (isDev) {
+      let jobs = DEV_JOBS.map(({ vendor: _v, milestones: _m, ...j }) => j as CustomJob);
+      if (filter?.status) jobs = jobs.filter(j => j.status === filter.status);
+      if (filter?.vendor_id) jobs = jobs.filter(j => j.vendor_id === filter.vendor_id);
+      if (filter?.source) jobs = jobs.filter(j => j.source === filter.source);
+      if (filter?.q) {
+        const q = filter.q.toLowerCase();
+        jobs = jobs.filter(j => j.customer_email.includes(q) || j.job_number.toLowerCase().includes(q) || j.title.toLowerCase().includes(q));
+      }
+      return jobs;
+    }
+
+    let query = supabase.from("custom_jobs").select("*").order("updated_at", { ascending: false });
+    if (filter?.status) query = query.eq("status", filter.status) as typeof query;
+    if (filter?.vendor_id) query = query.eq("vendor_id", filter.vendor_id) as typeof query;
+    if (filter?.source) query = query.eq("source", filter.source) as typeof query;
+    if (filter?.q) {
+      const q = filter.q;
+      query = query.or(`customer_email.ilike.%${q}%,job_number.ilike.%${q}%,title.ilike.%${q}%`) as typeof query;
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []) as CustomJob[];
+  },
+
+  async get(id: string): Promise<CustomJobDetail> {
+    if (isDev) {
+      const job = DEV_JOBS.find(j => j.id === id);
+      if (!job) throw new Error("Job not found");
+      return { ...job, milestones: [...job.milestones] };
+    }
+
+    const { data, error } = await supabase
+      .from("custom_jobs")
+      .select("*, vendors(*), custom_job_milestones(*)")
+      .eq("id", id).single();
+    if (error) throw error;
+    const { vendors, custom_job_milestones, ...job } = data as any;
+    return { ...job, vendor: vendors, milestones: custom_job_milestones || [] } as CustomJobDetail;
+  },
+
+  async getByToken(token: string): Promise<CustomJobPublic> {
+    if (isDev) {
+      const job = DEV_JOBS.find(j => j.tracking_token === token);
+      if (!job) throw new Error("Job not found");
+      return {
+        id: job.id, job_number: job.job_number, title: job.title, status: job.status,
+        estimated_ready_date: job.estimated_ready_date, deposit_amount: job.deposit_amount,
+        final_amount: job.final_amount,
+        milestones: job.milestones.map(m => ({ milestone: m.milestone, status: m.status, photos: m.photos, completed_at: m.completed_at })),
+      };
+    }
+
+    const { data, error } = await supabase
+      .from("custom_jobs")
+      .select("*, custom_job_milestones(milestone, status, photos, completed_at)")
+      .eq("tracking_token", token).single();
+    if (error) throw error;
+    const { custom_job_milestones, ...job } = data as any;
+    return { ...job, milestones: custom_job_milestones || [] } as CustomJobPublic;
+  },
+
+  async createFromRequest(custom_request_id: string, spec: Record<string, unknown>): Promise<CustomJob> {
+    if (isDev) {
+      const now = new Date().toISOString();
+      const id = `cj-dev-${Date.now()}`;
+      const job: CustomJobDetail = {
+        id, job_number: makeDevJobNumber(), source: "custom_request", custom_request_id,
+        customer_email: (spec.customer_email as string) || "user@test.com",
+        customer_name: spec.customer_name as string | undefined,
+        customer_phone: spec.customer_phone as string | undefined,
+        title: (spec.title as string) || "Custom Design from Request",
+        specification: spec,
+        status: "intake", deposit_amount: 0, deposit_paid: false, final_amount: 0, final_paid: false,
+        tracking_token: makeDevTrackingToken(), created_at: now, updated_at: now,
+        milestones: makeDefaultMilestones(id),
+      };
+      DEV_JOBS.push(job);
+      return job;
+    }
+
+    const { data: req, error: reqErr } = await supabase.from("custom_requests").select("*").eq("id", custom_request_id).single();
+    if (reqErr) throw reqErr;
+
+    const now = new Date().toISOString();
+    const { data, error } = await supabase.from("custom_jobs").insert({
+      source: "custom_request", custom_request_id,
+      customer_email: req.customer_email, customer_name: req.customer_name, customer_phone: req.customer_phone,
+      title: spec.title || `Custom Design - ${req.customer_email}`,
+      specification: spec, tracking_token: crypto.randomUUID(),
+      status: "intake", deposit_amount: 0, deposit_paid: false, final_amount: 0, final_paid: false,
+      created_at: now, updated_at: now,
+    }).select().single();
+    if (error) throw error;
+    return data as CustomJob;
+  },
+
+  async createMTO(product_id: string, order_id: string, spec: Record<string, unknown>): Promise<CustomJob> {
+    if (isDev) {
+      const now = new Date().toISOString();
+      const id = `cj-dev-${Date.now()}`;
+      const job: CustomJobDetail = {
+        id, job_number: makeDevJobNumber(), source: "mto", product_id, order_id,
+        customer_email: "user@test.com", title: "Made-to-Order", specification: spec,
+        status: "intake", deposit_amount: 0, deposit_paid: false, final_amount: 0, final_paid: false,
+        tracking_token: makeDevTrackingToken(), created_at: now, updated_at: now,
+        milestones: makeDefaultMilestones(id),
+      };
+      DEV_JOBS.push(job);
+      return job;
+    }
+
+    const now = new Date().toISOString();
+    const { data, error } = await supabase.from("custom_jobs").insert({
+      source: "mto", product_id, order_id, specification: spec,
+      customer_email: "", title: "Made-to-Order",
+      tracking_token: crypto.randomUUID(),
+      status: "intake", deposit_amount: 0, deposit_paid: false, final_amount: 0, final_paid: false,
+      created_at: now, updated_at: now,
+    }).select().single();
+    if (error) throw error;
+    return data as CustomJob;
+  },
+
+  async update(id: string, patch: Partial<CustomJob>): Promise<CustomJob> {
+    if (isDev) {
+      const idx = DEV_JOBS.findIndex(j => j.id === id);
+      if (idx === -1) throw new Error("Job not found");
+      DEV_JOBS[idx] = { ...DEV_JOBS[idx], ...patch, updated_at: new Date().toISOString() };
+      const { vendor: _v, milestones: _m, ...job } = DEV_JOBS[idx];
+      return job as CustomJob;
+    }
+
+    const { data, error } = await supabase.from("custom_jobs")
+      .update({ ...patch, updated_at: new Date().toISOString() }).eq("id", id).select().single();
+    if (error) throw error;
+    return data as CustomJob;
+  },
+
+  async assignVendor(id: string, vendor_id: string): Promise<void> {
+    if (isDev) {
+      const idx = DEV_JOBS.findIndex(j => j.id === id);
+      if (idx !== -1) {
+        const vendor = DEV_VENDORS.find(v => v.id === vendor_id);
+        DEV_JOBS[idx] = { ...DEV_JOBS[idx], vendor_id, vendor, updated_at: new Date().toISOString() };
+      }
+      return;
+    }
+
+    const { error } = await supabase.from("custom_jobs")
+      .update({ vendor_id, updated_at: new Date().toISOString() }).eq("id", id);
+    if (error) throw error;
+  },
+
+  async setMilestone(job_id: string, milestone: MilestoneName, patch: { status?: CustomJobMilestone["status"]; note?: string; photos?: string[] }): Promise<CustomJobMilestone> {
+    if (isDev) {
+      const jobIdx = DEV_JOBS.findIndex(j => j.id === job_id);
+      if (jobIdx === -1) throw new Error("Job not found");
+      const mIdx = DEV_JOBS[jobIdx].milestones.findIndex(m => m.milestone === milestone);
+      if (mIdx === -1) throw new Error("Milestone not found");
+      const existing = DEV_JOBS[jobIdx].milestones[mIdx];
+      const updated: CustomJobMilestone = {
+        ...existing, ...patch,
+        completed_at: patch.status === "done" ? new Date().toISOString() : existing.completed_at,
+        completed_by: patch.status === "done" ? (authService.getCurrentUserEmail() || undefined) : existing.completed_by,
+      };
+      DEV_JOBS[jobIdx].milestones[mIdx] = updated;
+      return updated;
+    }
+
+    const email = authService.getCurrentUserEmail();
+    const updates: Record<string, unknown> = { ...patch };
+    if (patch.status === "done") { updates.completed_at = new Date().toISOString(); updates.completed_by = email; }
+
+    const { data, error } = await supabase.from("custom_job_milestones")
+      .upsert({ job_id, milestone, ...updates }, { onConflict: "job_id,milestone" })
+      .select().single();
+    if (error) throw error;
+    return data as CustomJobMilestone;
+  },
+
+  async uploadMilestonePhoto(job_id: string, milestone: MilestoneName, file: File): Promise<string> {
+    if (isDev) return URL.createObjectURL(file);
+
+    const fileExt = file.name.split(".").pop();
+    const filePath = `custom-jobs/${job_id}/${milestone}/${Date.now()}.${fileExt}`;
+    const { error } = await supabase.storage.from("images").upload(filePath, file, { cacheControl: "3600", upsert: false });
+    if (error) throw error;
+    const { data } = supabase.storage.from("images").getPublicUrl(filePath);
+    return data.publicUrl;
   },
 };

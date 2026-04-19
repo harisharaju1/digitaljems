@@ -195,3 +195,81 @@ CREATE POLICY "Admin logs insertable by authenticated" ON admin_logs FOR INSERT 
 -- Storage bucket for images
 -- Run this separately or in Supabase dashboard:
 -- INSERT INTO storage.buckets (id, name, public) VALUES ('images', 'images', true);
+
+-- ============= Feature 2, Phase 1: Custom Jobs Pipeline =============
+-- See supabase/migrations/20260420_10_custom_jobs_schema.sql for the full migration.
+
+CREATE TABLE IF NOT EXISTS vendors (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  phone TEXT,
+  email TEXT,
+  specialties TEXT[] NOT NULL DEFAULT '{}',
+  reliability_score DECIMAL(3,2) DEFAULT 5.00,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  address JSONB,
+  notes TEXT,
+  auth_user_id UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE SEQUENCE IF NOT EXISTS custom_job_seq START 1;
+
+CREATE TABLE IF NOT EXISTS custom_jobs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_number TEXT UNIQUE NOT NULL,
+  source TEXT NOT NULL CHECK (source IN ('custom_request','mto','admin_manual')),
+  custom_request_id UUID REFERENCES custom_requests(id),
+  product_id UUID REFERENCES products(id),
+  order_id UUID REFERENCES orders(id),
+  customer_email TEXT NOT NULL,
+  customer_name TEXT,
+  customer_phone TEXT,
+  vendor_id UUID REFERENCES vendors(id),
+  title TEXT NOT NULL,
+  specification JSONB NOT NULL DEFAULT '{}',
+  status TEXT NOT NULL DEFAULT 'intake' CHECK (status IN (
+    'intake','design','quoted','approved','deposit_pending','in_production',
+    'qc','ready_for_dispatch','dispatched','delivered','cancelled','on_hold'
+  )),
+  deposit_amount DECIMAL(12,2) DEFAULT 0,
+  deposit_paid BOOLEAN DEFAULT FALSE,
+  final_amount DECIMAL(12,2) DEFAULT 0,
+  final_paid BOOLEAN DEFAULT FALSE,
+  estimated_ready_date DATE,
+  actual_ready_date DATE,
+  tracking_token TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS custom_job_milestones (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  job_id UUID NOT NULL REFERENCES custom_jobs(id) ON DELETE CASCADE,
+  milestone TEXT NOT NULL CHECK (milestone IN (
+    'design_approved','cad_ready','wax_model','casting',
+    'stone_setting','finishing','qc','ready'
+  )),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','done','skipped')),
+  photos JSONB NOT NULL DEFAULT '[]',
+  note TEXT,
+  completed_at TIMESTAMPTZ,
+  completed_by TEXT,
+  UNIQUE(job_id, milestone)
+);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_by TEXT,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Products: MTO opt-in columns
+ALTER TABLE products ADD COLUMN IF NOT EXISTS allow_mto BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS mto_lead_time_weeks INTEGER DEFAULT 4;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS mto_deposit_pct DECIMAL(5,2);
+
+-- Orders: MTO payment split
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS custom_job_id UUID REFERENCES custom_jobs(id);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_split JSONB;
