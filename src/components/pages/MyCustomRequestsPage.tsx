@@ -4,8 +4,8 @@
  */
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, Image as ImageIcon, Clock, MessageSquare, CheckCircle, X, Phone } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Loader2, Image as ImageIcon, Clock, MessageSquare, CheckCircle, X, Phone, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/hooks/use-toast";
-import { customRequestService } from "@/components/lib/sdk";
+import { customRequestService, customJobService } from "@/components/lib/sdk";
 import { useAuthStore } from "@/components/store/auth-store";
 import type { CustomRequest } from "@/components/types";
 
@@ -41,6 +41,7 @@ export function MyCustomRequestsPage() {
   const { toast } = useToast();
   const { isAuthenticated, user } = useAuthStore();
   const [requests, setRequests] = useState<CustomRequest[]>([]);
+  const [promotedMap, setPromotedMap] = useState<Map<string, string>>(new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
@@ -57,8 +58,19 @@ export function MyCustomRequestsPage() {
     if (!user?.email) return;
 
     try {
-      const data = await customRequestService.getMyRequests(user.email);
+      const [data, jobs] = await Promise.all([
+        customRequestService.getMyRequests(user.email),
+        customJobService.listForCustomer(user.email),
+      ]);
       setRequests(data);
+      // Build a map of request_id → tracking_token for promoted requests
+      setPromotedMap(
+        new Map(
+          jobs
+            .filter((j) => j.custom_request_id)
+            .map((j) => [j.custom_request_id!, j.tracking_token])
+        )
+      );
     } catch (error) {
       toast({
         title: "Failed to load requests",
@@ -160,6 +172,18 @@ export function MyCustomRequestsPage() {
                         <Phone className="h-4 w-4" />
                         <span>{request.customer_phone}</span>
                       </div>
+
+                      {/* Promoted — show production tracker link */}
+                      {promotedMap.has(request.id) && (
+                        <div className="flex items-center gap-2">
+                          <Button asChild variant="outline" size="sm">
+                            <Link to={`/track/${promotedMap.get(request.id)}`}>
+                              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                              View production status
+                            </Link>
+                          </Button>
+                        </div>
+                      )}
 
                       {/* Admin Response */}
                       {request.admin_response && (

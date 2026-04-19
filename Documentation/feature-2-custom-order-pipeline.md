@@ -358,7 +358,7 @@ All follow the `if (isDev)` pattern. Dev mocks: 3 seeded vendors, `DEV_SETTINGS 
 
 ---
 
-## Phase 3 — Customer Tracker + Milestone Emails (M)
+## Phase 3 — Customer Tracker + Milestone Emails (M) ✓ Done — [step-03 doc](./feature-2-step-03-customer-tracker-emails.md)
 
 **Goal:** Public `/track/:token` page (no login). Authenticated `/my-custom-jobs`. DB triggers fire email on status change + milestone completion.
 

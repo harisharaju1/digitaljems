@@ -1881,4 +1881,21 @@ export const customJobService = {
     const { data } = supabase.storage.from("images").getPublicUrl(filePath);
     return data.publicUrl;
   },
+
+  async listForCustomer(email: string): Promise<CustomJob[]> {
+    if (isDev) {
+      return DEV_JOBS
+        .map(({ vendor: _v, milestones: _m, ...j }) => j as CustomJob)
+        .filter((j) => j.customer_email === email)
+        .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+    }
+
+    const { data, error } = await supabase
+      .from("custom_jobs")
+      .select("*")
+      .eq("customer_email", email)
+      .order("updated_at", { ascending: false });
+    if (error) throw error;
+    return (data || []) as CustomJob[];
+  },
 };

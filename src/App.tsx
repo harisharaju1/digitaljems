@@ -30,6 +30,8 @@ import { AdminVendors } from "@/components/pages/admin/AdminVendors";
 import { AdminVendorForm } from "@/components/pages/admin/AdminVendorForm";
 import { AdminCustomJobs } from "@/components/pages/admin/AdminCustomJobs";
 import { AdminCustomJobDetail } from "@/components/pages/admin/AdminCustomJobDetail";
+import { TrackCustomJobPage } from "@/components/pages/TrackCustomJobPage";
+import { MyCustomJobsPage } from "@/components/pages/MyCustomJobsPage";
 import NotFoundPage from "@/components/pages/NotFoundPage";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { supabase } from "@/components/lib/supabase";
@@ -166,6 +168,8 @@ function App() {
                     <Route path="/custom-request" element={<CustomRequestPage />} />
                     <Route path="/custom-request/:id" element={<CustomRequestDetailPage />} />
                     <Route path="/my-custom-requests" element={<MyCustomRequestsPage />} />
+                    <Route path="/my-custom-jobs" element={<MyCustomJobsPage />} />
+                    <Route path="/track/:token" element={<TrackCustomJobPage />} />
                     <Route path="/wishlist" element={<WishlistPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Routes>
