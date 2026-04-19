@@ -26,6 +26,10 @@ import { AdminOrderDetail } from "@/components/pages/admin/AdminOrderDetail";
 import { AdminOrderUpdate } from "@/components/pages/admin/AdminOrderUpdate";
 import { AdminCustomRequests } from "@/components/pages/admin/AdminCustomRequests";
 import { AdminCustomRequestDetailPage } from "@/components/pages/admin/AdminCustomRequestDetailPage";
+import { AdminVendors } from "@/components/pages/admin/AdminVendors";
+import { AdminVendorForm } from "@/components/pages/admin/AdminVendorForm";
+import { AdminCustomJobs } from "@/components/pages/admin/AdminCustomJobs";
+import { AdminCustomJobDetail } from "@/components/pages/admin/AdminCustomJobDetail";
 import NotFoundPage from "@/components/pages/NotFoundPage";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { supabase } from "@/components/lib/supabase";
@@ -133,6 +137,11 @@ function App() {
             <Route path="orders/:id/update" element={<AdminOrderUpdate />} />
             <Route path="custom-requests" element={<AdminCustomRequests />} />
             <Route path="custom-requests/:id" element={<AdminCustomRequestDetailPage />} />
+            <Route path="custom-jobs" element={<AdminCustomJobs />} />
+            <Route path="custom-jobs/:id" element={<AdminCustomJobDetail />} />
+            <Route path="vendors" element={<AdminVendors />} />
+            <Route path="vendors/new" element={<AdminVendorForm />} />
+            <Route path="vendors/:id/edit" element={<AdminVendorForm />} />
           </Route>
 
           {/* Customer Routes - With Header & Footer */}

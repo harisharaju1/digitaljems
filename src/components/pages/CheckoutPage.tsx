@@ -14,7 +14,7 @@ import { FormField } from "@/components/ui/form-field";
 import { useToast } from "@/components/hooks/use-toast";
 import { useCartStore } from "@/components/store/cart-store";
 import { useAuthStore } from "@/components/store/auth-store";
-import { orderService, emailNotificationService } from "@/components/lib/sdk";
+import { orderService, emailNotificationService, stockService } from "@/components/lib/sdk";
 import { checkoutFormSchema, validateForm, type CheckoutFormValues } from "@/components/lib/validation";
 import { initiatePayment } from "@/components/lib/payments";
 import { ecommerceEvents } from "@/components/lib/analytics";
@@ -97,6 +97,8 @@ export function CheckoutPage() {
     if (!validatedData) return;
 
     setIsSubmitting(true);
+    // CONCEPT: track reserved items so we can release them if payment fails
+    const reservedItems: { product_id: string; qty: number }[] = [];
 
     try {
       // Track checkout analytics
@@ -104,6 +106,42 @@ export function CheckoutPage() {
         items.map((i) => ({ id: i.product.id, name: i.product.name, price: i.product.price, quantity: i.quantity })),
         total
       );
+
+      // CONCEPT: atomic stock reservation — reserve before creating the order so two
+      // simultaneous buyers can't both claim the last unit. The RPC uses FOR UPDATE
+      // to lock the row within a single transaction.
+      for (const item of items) {
+        let result;
+        try {
+          result = await stockService.reserve(item.product.id, item.quantity);
+        } catch (err) {
+          // Release any already-reserved items before aborting
+          for (const ri of reservedItems) {
+            await stockService.release(ri.product_id, ri.qty).catch(() => {});
+          }
+          toast({
+            title: "Item unavailable",
+            description: err instanceof Error ? err.message : `${item.product.name} is out of stock`,
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        if (result.mto_required) {
+          // Out of stock — MTO checkout handled in Phase 4; abort for now
+          for (const ri of reservedItems) {
+            await stockService.release(ri.product_id, ri.qty).catch(() => {});
+          }
+          toast({
+            title: "Item out of stock",
+            description: `${item.product.name} is currently out of stock. Made-to-order will be available soon.`,
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+        reservedItems.push({ product_id: item.product.id, qty: item.quantity });
+      }
 
       // Convert cart items to order items
       const orderItems: OrderItem[] = items.map((item) => ({
@@ -135,8 +173,11 @@ export function CheckoutPage() {
       });
 
       if (!paymentResult.success) {
-        // Payment failed or cancelled - update order status
+        // Payment failed — update order status and release reserved stock
         await orderService.updateOrderStatus(order.id, "payment_failed");
+        for (const ri of reservedItems) {
+          await stockService.release(ri.product_id, ri.qty).catch(() => {});
+        }
         toast({
           title: "Payment cancelled",
           description: paymentResult.error || "Please try again",
@@ -180,6 +221,10 @@ export function CheckoutPage() {
       // Navigate to order confirmation
       navigate(`/order-confirmation/${order.order_number}`);
     } catch (error) {
+      // Release any reserved stock on unexpected failure
+      for (const ri of reservedItems) {
+        await stockService.release(ri.product_id, ri.qty).catch(() => {});
+      }
       console.error("Checkout error:", error);
       captureException(error as Error, { formData });
       toast({

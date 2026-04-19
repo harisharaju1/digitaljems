@@ -29,6 +29,10 @@ export interface Product {
   stone_grade?: string; // Stone grade/clarity (e.g., "FG-SI", "VS", "VVS")
   stone_setting?: string; // Stone setting type (e.g., "Hand Setting", "Prong Setting", "Bezel Setting")
   stone_count?: number; // Number of diamonds/stones
+  // MTO fields (Feature 2, Phase 1)
+  allow_mto?: boolean;
+  mto_lead_time_weeks?: number;
+  mto_deposit_pct?: number;
   created_at: string;
   updated_at: string;
 }
@@ -109,7 +113,10 @@ export type OrderStatus =
   | "shipped"
   | "delivered"
   | "cancelled"
-  | "payment_failed";
+  | "payment_failed"
+  | "mto_awaiting_deposit"
+  | "mto_in_production"
+  | "mto_ready_for_dispatch";
 
 // ============= Cart Types =============
 export interface CartItem {
@@ -158,7 +165,7 @@ export interface AdminLog {
   id: string;
   admin_email: string;
   action_type: AdminActionType;
-  entity_type: "product" | "order" | "request";
+  entity_type: "product" | "order" | "request" | "vendor" | "job" | "milestone";
   entity_id: string;
   details: Record<string, any>;
   timestamp: string;
@@ -169,7 +176,12 @@ export type AdminActionType =
   | "product_updated"
   | "product_deleted"
   | "order_updated"
-  | "request_responded";
+  | "request_responded"
+  | "vendor_created"
+  | "vendor_updated"
+  | "job_created"
+  | "job_status_changed"
+  | "milestone_updated";
 
 // ============= Form Types =============
 export interface CheckoutFormData {
@@ -222,10 +234,80 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[];
-  total: number;
-  page: number;
-  limit: number;
-  hasMore: boolean;
+// ============= Vendor Types (Feature 2) =============
+export type VendorSpecialty = "casting" | "stone_setting" | "polishing" | "cad" | "engraving" | "assembly";
+
+export interface Vendor {
+  id: string;
+  name: string;
+  phone?: string;
+  email?: string;
+  specialties: VendorSpecialty[];
+  reliability_score: number;
+  active: boolean;
+  address?: Record<string, string>;
+  notes?: string;
+  created_at: string;
+}
+
+// ============= Custom Job Types (Feature 2, Phase 2) =============
+export type CustomJobStatus =
+  | "intake" | "design" | "quoted" | "approved" | "deposit_pending"
+  | "in_production" | "qc" | "ready_for_dispatch" | "dispatched"
+  | "delivered" | "cancelled" | "on_hold";
+
+export type MilestoneName =
+  | "design_approved" | "cad_ready" | "wax_model" | "casting"
+  | "stone_setting" | "finishing" | "qc" | "ready";
+
+export interface CustomJob {
+  id: string;
+  job_number: string;
+  source: "custom_request" | "mto" | "admin_manual";
+  custom_request_id?: string;
+  product_id?: string;
+  order_id?: string;
+  customer_email: string;
+  customer_name?: string;
+  customer_phone?: string;
+  vendor_id?: string;
+  title: string;
+  specification: Record<string, unknown>;
+  status: CustomJobStatus;
+  deposit_amount: number;
+  deposit_paid: boolean;
+  final_amount: number;
+  final_paid: boolean;
+  estimated_ready_date?: string;
+  actual_ready_date?: string;
+  tracking_token: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomJobMilestone {
+  id: string;
+  job_id: string;
+  milestone: MilestoneName;
+  status: "pending" | "in_progress" | "done" | "skipped";
+  photos: string[];
+  note?: string;
+  completed_at?: string;
+  completed_by?: string;
+}
+
+export interface CustomJobDetail extends CustomJob {
+  vendor?: Vendor;
+  milestones: CustomJobMilestone[];
+}
+
+export interface CustomJobPublic {
+  id: string;
+  job_number: string;
+  title: string;
+  status: CustomJobStatus;
+  estimated_ready_date?: string;
+  deposit_amount: number;
+  final_amount: number;
+  milestones: Pick<CustomJobMilestone, "milestone" | "status" | "photos" | "completed_at">[];
 }

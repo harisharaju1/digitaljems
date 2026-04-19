@@ -42,6 +42,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/hooks/use-toast";
 import { productService, adminLogService } from "@/components/lib/sdk";
+import { cache } from "@/components/lib/cache";
 import type { Product } from "@/components/types";
 
 export function AdminProducts() {
@@ -84,6 +85,10 @@ export function AdminProducts() {
       await adminLogService.logAction("product_deleted", "product", deletingProduct.id, {
         name: deletingProduct.name,
       });
+      // CONCEPT: event-based cache invalidation — deleted product must not appear
+      // in cached results. Clear list and individual product caches.
+      cache.invalidateByPrefix("products");
+      cache.invalidate(`product:${deletingProduct.id}`);
       toast({ title: "Product deleted successfully" });
       setDeletingProduct(null);
       loadProducts();

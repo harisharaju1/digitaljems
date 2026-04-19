@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, MessageSquare, Send, Phone, Image as ImageIcon, X } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Send, Phone, Image as ImageIcon, X, Hammer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/hooks/use-toast";
-import { customRequestService, adminLogService } from "@/components/lib/sdk";
+import { customRequestService, adminLogService, customJobService } from "@/components/lib/sdk";
 import type { CustomRequest, CustomRequestStatus } from "@/components/types";
 
 const statusConfig: Record<string, { label: string; color: string }> = {
@@ -52,6 +52,7 @@ export function AdminCustomRequestDetailPage() {
   const [request, setRequest] = useState<CustomRequest | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isResponding, setIsResponding] = useState(false);
+  const [isPromoting, setIsPromoting] = useState(false);
   
   // Response form
   const [responseText, setResponseText] = useState("");
@@ -169,7 +170,38 @@ export function AdminCustomRequestDetailPage() {
               Review and respond to the customer's request
             </p>
           </div>
-          <Badge className={status.color}>{status.label}</Badge>
+          <div className="flex items-center gap-3">
+            <Badge className={status.color}>{status.label}</Badge>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                if (!request) return;
+                setIsPromoting(true);
+                try {
+                  // CONCEPT: promote to job — original request row untouched; new job links back via custom_request_id
+                  const job = await customJobService.createFromRequest(request.id, {
+                    title: request.description.slice(0, 80).trim() || "Custom Design",
+                    customer_email: request.customer_email,
+                    customer_name: request.customer_name,
+                    customer_phone: request.customer_phone,
+                  });
+                  await adminLogService.logAction("job_created", "job", job.id, {
+                    source: "custom_request", custom_request_id: request.id,
+                  });
+                  toast({ title: `Job ${job.job_number} created` });
+                  navigate(`/admin/custom-jobs/${job.id}`);
+                } catch (err) {
+                  toast({ title: "Failed to create job", description: err instanceof Error ? err.message : "Please try again", variant: "destructive" });
+                } finally {
+                  setIsPromoting(false);
+                }
+              }}
+              disabled={isPromoting}
+            >
+              {isPromoting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Hammer className="mr-2 h-4 w-4" />}
+              Promote to Job
+            </Button>
+          </div>
         </div>
       </div>
 
